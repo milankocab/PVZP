@@ -15,20 +15,24 @@ export const MAX_TRAVELERS = 9
 // Svět je jedna oblast včetně USA a Kanady, aby klient na mobilu řešil o jedno rozhodnutí méně.
 // Sazba 70 Kč (1,84× Evropa) leží mezi cenou cest do Asie a cest do USA. Předpoklad z dat
 // smyšlené firmy o škodách mimo Evropu.
-export const REGIONS: Record<RegionId, { label: string; description: string; dailyRate: number }> =
-  {
-    europe: {
-      label: 'Evropa',
-      description:
-        'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
-      dailyRate: 38,
-    },
-    world: {
-      label: 'Svět',
-      description: 'Všechny státy světa',
-      dailyRate: 70,
-    },
-  }
+export const REGIONS: Record<
+  RegionId,
+  { label: string; shortDescription: string; description: string; dailyRate: number }
+> = {
+  europe: {
+    label: 'Evropa',
+    shortDescription: 'včetně Turecka a Maroka',
+    description:
+      'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
+    dailyRate: 38,
+  },
+  world: {
+    label: 'Svět',
+    shortDescription: 'včetně USA a Kanady',
+    description: 'Všechny státy světa',
+    dailyRate: 70,
+  },
+}
 
 export const TRAVELER_TYPES: Record<
   TravelerType,
@@ -148,76 +152,93 @@ export const PLAN_ORDER: PlanId[] = ['basic', 'comfort', 'premium']
 
 // Řádky srovnávací tabulky krytí. Hodnota true znamená „kryto“, false „nekryto“.
 // Pořadí řádků je záměrné. Na mobilu se nahoře ukazuje to, čím se balíčky liší nejvíc.
-export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValue> }[] = [
+// Hodnoty jsou krátké, aby se na 375 px vešly do třetiny šířky na jeden řádek.
+export type CoverageRowId =
+  | 'luggage'
+  | 'luggageIncluded'
+  | 'electronicsItem'
+  | 'electronicsSettlement'
+  | 'companyElectronics'
+  | 'medical'
+  | 'medicalAssistance'
+  | 'extendedAssistance'
+  | 'repatriation'
+  | 'liability'
+  | 'injury'
+  | 'cancellation'
+  | 'flightDelay'
+
+export const COVERAGE_ROWS: {
+  id: CoverageRowId
+  label: string
+  values: Record<PlanId, CoverageValue>
+}[] = [
   {
-    label: 'Zavazadla a elektronika',
-    values: {
-      basic: '15 tis. Kč na kufr',
-      comfort: '50 tis. Kč na kufr',
-      premium: '80 tis. Kč na kufr',
-    },
+    id: 'luggage',
+    label: 'Zavazadla a elektronika na jeden kufr',
+    values: { basic: '15 tis. Kč', comfort: '50 tis. Kč', premium: '80 tis. Kč' },
   },
   {
+    id: 'luggageIncluded',
     label: 'Kufry v ceně',
     values: { basic: '1 na smlouvu', comfort: '1 na osobu', premium: '1 na osobu' },
   },
   {
+    id: 'electronicsItem',
     label: 'Jeden kus elektroniky',
-    values: {
-      basic: 'do limitu kufru',
-      comfort: 'nejvýše 40 tis. Kč',
-      premium: 'nejvýše 40 tis. Kč',
-    },
+    values: { basic: 'do limitu kufru', comfort: '40 tis. Kč', premium: '40 tis. Kč' },
   },
   {
+    id: 'electronicsSettlement',
     label: 'Plnění za elektroniku',
-    values: {
-      basic: 'Časová cena',
-      comfort: 'Časová cena',
-      premium: 'Nová cena u věcí do 2 let',
-    },
+    values: { basic: 'časová cena', comfort: 'časová cena', premium: 'nová cena do 2 let' },
   },
   {
     // Vlastnictví se dokládá až při škodě (faktura na firmu), plnění jde majiteli věci.
     // Pojištění věci, kterou pojištěný nevlastní, je nutné potvrdit s legal týmem.
+    id: 'companyElectronics',
     label: 'Firemní elektronika, kterou používáte',
     values: { basic: false, comfort: false, premium: true },
   },
   {
+    id: 'medical',
     label: 'Léčebné výlohy',
-    values: { basic: '5 mil. Kč', comfort: '25 mil. Kč', premium: '250 mil. Kč' },
+    values: { basic: '5 mil. Kč', comfort: '25 mil. Kč', premium: '250 mil. Kč' },
   },
   {
+    id: 'medicalAssistance',
     label: 'Lékařská asistence nonstop',
     values: { basic: true, comfort: true, premium: true },
   },
   {
-    label: 'Rozšířená asistence (ztráta dokladů, právní pomoc)',
+    id: 'extendedAssistance',
+    label: 'Ztráta dokladů a právní pomoc',
     values: { basic: false, comfort: true, premium: true },
   },
   {
+    id: 'repatriation',
     label: 'Převoz zpět do ČR',
     values: { basic: true, comfort: true, premium: true },
   },
   {
+    id: 'liability',
     label: 'Odpovědnost za škodu',
-    values: { basic: '3 mil. Kč', comfort: '10 mil. Kč', premium: '25 mil. Kč' },
+    values: { basic: '3 mil. Kč', comfort: '10 mil. Kč', premium: '25 mil. Kč' },
   },
   {
+    id: 'injury',
     label: 'Trvalé následky úrazu',
-    values: { basic: false, comfort: '200 tis. Kč', premium: '400 tis. Kč' },
+    values: { basic: false, comfort: '200 tis. Kč', premium: '400 tis. Kč' },
   },
   {
+    id: 'cancellation',
     label: 'Storno zájezdu',
-    values: {
-      basic: 'Jako připojištění',
-      comfort: 'Jako připojištění',
-      premium: 'V ceně, bez lhůty od koupě',
-    },
+    values: { basic: 'připojištění', comfort: 'připojištění', premium: 'v ceně, bez lhůty' },
   },
   {
+    id: 'flightDelay',
     label: 'Zpoždění letu nad 6 hodin',
-    values: { basic: false, comfort: false, premium: '3 tis. Kč' },
+    values: { basic: false, comfort: false, premium: '3 tis. Kč' },
   },
 ]
 
@@ -258,7 +279,7 @@ export const ADDONS: Record<AddonId, Addon> = {
   winterSports: {
     id: 'winterSports',
     label: 'Zimní a rizikové sporty',
-    description: 'Lyžování, snowboard, skialpinismus a další sporty na horách',
+    description: 'Lyže, lezení, potápění, divoká voda, létání a další rizikové sporty',
     // Zhruba polovina denní ceny Základu v Evropě. TODO(Milan): ověřit řád ceny na trhu.
     pricing: { type: 'perPersonPerDay', amount: 20 },
   },
@@ -273,6 +294,40 @@ export const ADDONS: Record<AddonId, Addon> = {
     },
   },
 }
+
+export type SportId = 'ski' | 'climbing' | 'diving' | 'water' | 'mtb' | 'air' | 'motor' | 'other'
+
+/**
+ * Sporty, na které se ptám v kroku Doplňky. Rizikové zapnou připojištění sportů.
+ * Rizikové jsou sloučené do skupin, aby klient na mobilu nečetl dlouhý seznam.
+ * Běžné sporty (plavání, turistika po značených cestách, kolo po silnici) jsou v ceně
+ * a schovávají se pod jednu volbu „Jiné sporty“.
+ * TODO(Milan): ověřit, které sporty trh běžně řadí mezi rizikové.
+ */
+export const SPORT_ACTIVITIES: Record<
+  SportId,
+  { label: string; examples: string; risky: boolean }
+> = {
+  ski: { label: 'Lyže a snowboard', examples: 'sjezd, běžky, skialpy', risky: true },
+  climbing: { label: 'Lezení a vysoké hory', examples: 'ferraty, horolezectví', risky: true },
+  diving: { label: 'Potápění', examples: 's přístrojem', risky: true },
+  water: { label: 'Divoká voda a vítr', examples: 'rafting, surf, kite, wakeboard', risky: true },
+  mtb: { label: 'Horské kolo', examples: 'enduro, downhill', risky: true },
+  air: { label: 'Létání a skoky', examples: 'paragliding, bungee', risky: true },
+  motor: { label: 'Motorové sporty', examples: 'čtyřkolka, skútr', risky: true },
+  other: { label: 'Jiné sporty', examples: 'plavání, turistika, kolo, běh', risky: false },
+}
+
+export const SPORT_ORDER: SportId[] = [
+  'ski',
+  'climbing',
+  'water',
+  'diving',
+  'mtb',
+  'air',
+  'motor',
+  'other',
+]
 
 export const ADDON_ORDER: AddonId[] = ['winterSports', 'cancellation']
 
