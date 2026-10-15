@@ -94,9 +94,9 @@ Pracuji s hypotetickými historickými daty smyšlené firmy:
 Hranici jsem odvodil ze tří čísel:
 1. **Tržba nesmí klesnout.** Tržba na návštěvu je konverze krát AOV. Při růstu AOV o 10 % se tržba vyrovná při poklesu konverze o 9,1 % (1 − 1/1,10). Hranice 5 % nechává rezervu. Tržba na návštěvu i v nejhorším povoleném případě vzroste o 4,5 % (1,10 × 0,95).
 2. **Hranice musí být nad běžným kolísáním.** Konverze kolísá o 3 % i bez jakékoli změny. Hranice 2 % by byla pod tímto šumem a test by končil falešnými poplachy.
-3. **Test musí jít změřit v rozumné době.** Pro odhalení poklesu z 10 % o 5 % relativně (na 9,5 %) je potřeba asi 56 000 návštěv na variantu, tedy necelých 6 týdnů. Pro pokles o 2 % (na 9,8 %) by to bylo asi 353 000 návštěv na variantu, tedy přes 35 týdnů. To je nereálné.
+3. **Test musí jít změřit v rozumné době.** Pro odhalení poklesu z 10 % o 5 % relativně (na 9,5 %) je potřeba asi 55 000 návštěv na variantu, tedy necelých 6 týdnů. Pro pokles o 2 % (na 9,8 %) by to bylo asi 350 000 návštěv na variantu, tedy 35 týdnů. To je nereálné.
 
-Výpočet vzorku: hladina významnosti 5 %, síla 80 %, n = (1,96 + 0,84)² × 2 × p × (1 − p) / δ², kde p = 0,10 a δ je absolutní rozdíl konverze.
+Výpočet vzorku pro dvě proporce: hladina významnosti 5 % (oboustranně), síla 80 %, n = (1,96 × √(2 p̄ (1 − p̄)) + 0,84 × √(p₁(1 − p₁) + p₂(1 − p₂)))² / (p₂ − p₁)², kde p̄ je průměr obou konverzí. Stejný vzorec používá kalkulačka v case study a je otestovaný proti učebnicové hodnotě (686 návštěv pro konverzi 10 % proti 15 %).
 
 Data, která by hranici potvrdila na skutečném provozu: historická týdenní konverze funnelu (úroveň a kolísání), týdenní počet návštěv, rozložení cen objednávek (průměr a směrodatná odchylka pro AOV), očekávaná změna podílu balíčků a náklady na získání jednoho návštěvníka.
 
@@ -176,13 +176,14 @@ Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty s
 
 ## Fáze 4: A/B přidělení a měření
 
-- **Přidělení:** náhodně 50/50 při první návštěvě, uložit do `localStorage` (obalit `try/catch`), přepsatelné parametrem `?v=a|b`.
+- **Přidělení:** náhodně 50/50 při první návštěvě, uložit do `localStorage` (obalit `try/catch`), přepsatelné parametrem `?v=a|b`. Parametr uložené přidělení nepřepíše, aby ukázka pro recruitera nezměnila variantu skutečného návštěvníka.
 - **Segment:** manažer, pokud návštěva přišla z kampaně na manažery (UTM parametr `utm_audience=manazer`) nebo klient odpověděl „Jedete pracovně?“ ano. Jinak ostatní. Přepsatelné parametrem `?segment=manazer` pro ukázku. Do analytiky jdou parametry `segment`, `segment_source` (utm, otázka, žádný) a `trip_purpose`. Ani jeden není osobní údaj.
 - **Měřicí vrstva** `src/analytics/track.ts` s jedním rozhraním `track(event, params)`:
   - vždy uloží event lokálně (pro `#/vysledky`),
   - pokud je nastavené `VITE_GA4_ID`, pošle event i do Google Analytics 4 (gtag). Bez ID se GA4 nenačte.
-  - posílá jen: název eventu, variantu A/B testu, segment, účel cesty, číslo a název kroku, oblast, počet cestujících, zvolený balíček, přesnou cenu. Cena se nezaokrouhluje, protože AOV je primární metrika a zaokrouhlení by ho zkreslilo. Cena pojištění není osobní údaj. Při dokončení se do GA4 posílá i doporučený event `purchase` s hodnotou a měnou, aby GA4 ukázal AOV v přehledu Monetization. **Nikdy jména, e-maily, data narození.**
-- **Eventy funnelu:** `funnel_start`, `step_view`, `step_complete`, `price_shown` (poprvé), `plan_selected`, `addon_toggled`, `validation_error`, `checkout_click`, `payment_started`, `purchase_simulated`. Rozdíl mezi `payment_started` a `purchase_simulated` ukazuje odpad přímo při platbě.
+  - posílá jen: název eventu, variantu A/B testu, segment a jeho zdroj, účel cesty, číslo a název kroku, oblast, počet cestujících, zvolený balíček, přesnou cenu, název připojištění a jestli je zapnuté, název pole s chybou (nikdy hodnotu), volbu v upozornění na kufr a způsob platby. Whitelist v `track.ts` zahodí cokoli jiného. Cena se nezaokrouhluje, protože AOV je primární metrika a zaokrouhlení by ho zkreslilo. Cena pojištění není osobní údaj. Při dokončení se do GA4 posílá i doporučený event `purchase` s hodnotou a měnou, aby GA4 ukázal AOV v přehledu Monetization. **Nikdy jména, e-maily, data narození.**
+- **Eventy funnelu:** `funnel_start`, `step_view`, `step_complete`, `price_shown` (poprvé), `plan_selected`, `addon_toggled`, `luggage_warning_shown`, `luggage_warning_choice`, `upsell_shown`, `upsell_accepted`, `validation_error`, `checkout_click`, `payment_started` (výběr způsobu platby), `purchase_simulated`. Rozdíl mezi `payment_started` a `purchase_simulated` ukazuje odpad přímo při platbě. Eventy upozornění na kufr ukazují, kolik lidí přejde na Komfort. Eventy nabídky vyššího balíčku jsou pro test 2.
+- **Cookies.** GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies. Znění a řešení je nutné potvrdit s legal týmem.
 - **`#/vysledky`:** tabulka a jednoduchý graf funnelu po krocích pro obě varianty z lokálních dat, rozpad podle segmentu, AOV a konverze po variantách, tlačítko „Smazat data“. Jasný popisek, že jde jen o data z tohoto prohlížeče.
 - **Kalkulačka velikosti vzorku** v case study: hladina významnosti 5 %, síla 80 %. Dva režimy. Pro AOV (primární metrika) vstupy průměrná cena objednávky, směrodatná odchylka a minimální detekovatelný efekt, výstup počet objednávek a návštěv na variantu. Pro konverzi (ochranná metrika) vstupy výchozí konverze a minimální detekovatelný efekt. Výpočet ověř testem proti známé hodnotě.
 

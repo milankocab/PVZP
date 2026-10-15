@@ -10,11 +10,14 @@ import {
   type PlanId,
   type PriceBreakdown,
 } from '../pricing'
+import { resolveSegment, type Variant } from '../analytics/experiment'
+import { track, type EventName } from '../analytics/track'
 import { LuggageDialog } from './components/LuggageDialog'
 import { DesktopSummary, MobilePriceBar } from './components/PriceBar'
 import {
   STEPS,
   createInitialState,
+  selectedAddons,
   toBasePriceInput,
   toPriceInput,
   validateStep,
@@ -62,11 +65,24 @@ function focusFirstError(errors: Errors) {
 }
 
 interface PurchaseFlowProps {
-  preselectedPlan: PlanId | null
+  variant: Variant
   upsellEnabled: boolean
+  segmentOverride?: string | null
+  utmAudience?: string | null
 }
 
-export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowProps) {
+/** Varianta A nemá předvybraný balíček, varianta B má předvybraný Komfort. Jinak jsou stejné. */
+function preselectedPlanFor(variant: Variant): PlanId | null {
+  return variant === 'b' ? 'comfort' : null
+}
+
+export function PurchaseFlow({
+  variant,
+  upsellEnabled,
+  segmentOverride = null,
+  utmAudience = null,
+}: PurchaseFlowProps) {
+  const preselectedPlan = preselectedPlanFor(variant)
   const [state, setState] = useState<FormState>(() => createInitialState(preselectedPlan))
   const [stepIndex, setStepIndex] = useState(0)
   const [errors, setErrors] = useState<Errors>({})
@@ -74,12 +90,50 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
   const [purchased, setPurchased] = useState<PriceBreakdown | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const firstRender = useRef(true)
+  const tracked = useRef({ started: false, lastStep: -1, priceShown: false, upsellShown: false })
 
   const step = STEPS[stepIndex]
   const price = priceFor(state)
   const basicInput = toBasePriceInput(state, 'basic')
   const fromPrice =
     !state.plan && basicInput ? (tryCalculatePrice(basicInput)?.total ?? null) : null
+
+  // Kontext, který jde s každým eventem. Žádné osobní údaje, jen parametry z whitelistu track().
+  const trackEvent = (name: EventName, extra: Record<string, unknown> = {}, from = state) => {
+    const { segment, source } = resolveSegment(segmentOverride, utmAudience, from.tripPurpose)
+    track(name, {
+      variant,
+      segment,
+      segment_source: source,
+      trip_purpose: from.tripPurpose ?? 'unknown',
+      region: from.region ?? undefined,
+      traveler_count: countTravelers(from.travelers),
+      plan: from.plan ?? undefined,
+      price: priceFor(from)?.total,
+      ...extra,
+    })
+  }
+
+  useEffect(() => {
+    if (purchased) return
+    if (!tracked.current.started) {
+      tracked.current.started = true
+      trackEvent('funnel_start')
+    }
+    if (tracked.current.lastStep !== stepIndex) {
+      tracked.current.lastStep = stepIndex
+      trackEvent('step_view', { step_number: stepIndex + 1, step_name: STEPS[stepIndex].id })
+    }
+    // Eventy se mají odeslat jen při změně kroku, ne při každé změně stavu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, purchased])
+
+  useEffect(() => {
+    if (tracked.current.priceShown || (price === null && fromPrice === null)) return
+    tracked.current.priceShown = true
+    trackEvent('price_shown', { price: price?.total ?? fromPrice })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [price?.total, fromPrice])
 
   useEffect(() => {
     if (firstRender.current) {
@@ -91,6 +145,18 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
   }, [stepIndex, purchased])
 
   const update = (patch: Partial<FormState>) => {
+    const next = { ...state, ...patch }
+    if (patch.plan && patch.plan !== state.plan) trackEvent('plan_selected', {}, next)
+    const before = selectedAddons(state)
+    const after = selectedAddons(next)
+    for (const addon of new Set([...before, ...after])) {
+      if (before.includes(addon) !== after.includes(addon)) {
+        trackEvent('addon_toggled', { addon, enabled: after.includes(addon) }, next)
+      }
+    }
+    if (patch.paymentMethod && !state.paymentMethod) {
+      trackEvent('payment_started', { payment_method: patch.paymentMethod }, next)
+    }
     setState((current) => ({ ...current, ...patch }))
     // Chyby u polí, která klient právě opravuje, schováme. Ostatní nechá další pokus o pokračování.
     setErrors((current) => {
@@ -102,7 +168,10 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
   }
 
   const goNext = () => {
+    trackEvent('step_complete', { step_number: stepIndex + 1, step_name: step.id })
+    if (step.id === 'summary') trackEvent('checkout_click')
     if (step.id === 'payment') {
+      trackEvent('purchase_simulated', { payment_method: state.paymentMethod ?? undefined })
       setPurchased(price)
       return
     }
@@ -113,12 +182,21 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
     const stepErrors = validateStep(step.id, state)
     setErrors(stepErrors)
     if (Object.keys(stepErrors).length > 0) {
+      for (const field of Object.keys(stepErrors)) {
+        // Posílá se jen název pole, nikdy jeho hodnota.
+        trackEvent('validation_error', {
+          step_number: stepIndex + 1,
+          step_name: step.id,
+          field: field.replace(/^traveler-\d+-/, 'traveler-'),
+        })
+      }
       focusFirstError(stepErrors)
       return
     }
     if (step.id === 'extras' && state.plan) {
       const input = toPriceInput(state)
       if (input && isLuggageShared(input) && !state.luggageSharedConfirmed) {
+        trackEvent('luggage_warning_shown')
         setLuggageDialogOpen(true)
         return
       }
@@ -133,6 +211,14 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
     if (!nextPrice) return null
     return { plan: nextPlan, difference: nextPrice.total - price.total }
   })()
+
+  const upsellVisible = step.id === 'summary' && upsell !== null
+  useEffect(() => {
+    if (!upsellVisible || tracked.current.upsellShown) return
+    tracked.current.upsellShown = true
+    trackEvent('upsell_shown')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upsellVisible])
 
   if (purchased) {
     return (
@@ -156,6 +242,12 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
           <button
             type="button"
             onClick={() => {
+              tracked.current = {
+                started: false,
+                lastStep: -1,
+                priceShown: false,
+                upsellShown: false,
+              }
               setState(createInitialState(preselectedPlan))
               setStepIndex(0)
               setPurchased(null)
@@ -235,7 +327,11 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
             <StepSummary
               {...stepProps}
               upsell={upsell}
-              onAcceptUpsell={() => upsell && update({ plan: upsell.plan, luggagePieces: null })}
+              onAcceptUpsell={() => {
+                if (!upsell) return
+                trackEvent('upsell_accepted', { plan: upsell.plan })
+                update({ plan: upsell.plan, luggagePieces: null })
+              }}
             />
           )}
           {step.id === 'payment' && <StepPayment {...stepProps} />}
@@ -265,18 +361,21 @@ export function PurchaseFlow({ preselectedPlan, upsellEnabled }: PurchaseFlowPro
           onAddPiece={() => {
             const pieces =
               state.luggagePieces ?? includedLuggagePieces(state.plan!, state.travelers)
+            trackEvent('luggage_warning_choice', { choice: 'add_piece' })
             update({ luggagePieces: pieces + 1 })
             setLuggageDialogOpen(false)
           }}
           onUpgrade={
             state.plan === 'basic'
               ? () => {
+                  trackEvent('luggage_warning_choice', { choice: 'upgrade' })
                   update({ plan: 'comfort', luggagePieces: null })
                   setLuggageDialogOpen(false)
                 }
               : null
           }
           onConfirm={() => {
+            trackEvent('luggage_warning_choice', { choice: 'confirm' })
             update({ luggageSharedConfirmed: true })
             setLuggageDialogOpen(false)
             goNext()

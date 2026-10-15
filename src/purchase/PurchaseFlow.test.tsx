@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { clearStoredEvents, getStoredEvents } from '../analytics/track'
 import { PurchaseFlow } from './PurchaseFlow'
 
 // jsdom zatím neumí modální <dialog>, doplníme minimum pro test.
@@ -13,10 +14,10 @@ beforeAll(() => {
   window.scrollTo = () => {}
 })
 
-function renderFlow(preselectedPlan: 'comfort' | null = null) {
+function renderFlow(variant: 'a' | 'b' = 'a', upsellEnabled = false) {
   render(
     <MemoryRouter>
-      <PurchaseFlow preselectedPlan={preselectedPlan} upsellEnabled={false} />
+      <PurchaseFlow variant={variant} upsellEnabled={upsellEnabled} />
     </MemoryRouter>,
   )
 }
@@ -35,6 +36,7 @@ function fillTrip() {
 
 describe('PurchaseFlow', () => {
   it('projde celý postup až k simulované platbě', () => {
+    clearStoredEvents()
     renderFlow()
     expect(screen.getByRole('heading', { name: 'Kam a kdy jedete' })).toBeInTheDocument()
     fillTrip()
@@ -70,10 +72,30 @@ describe('PurchaseFlow', () => {
     expect(
       screen.getByRole('heading', { name: 'Hotovo. Pojištění je sjednané.' }),
     ).toBeInTheDocument()
+
+    const events = getStoredEvents()
+    const names = events.map((event) => event.name)
+    expect(names[0]).toBe('funnel_start')
+    expect(names).toContain('price_shown')
+    expect(names).toContain('plan_selected')
+    expect(names).toContain('validation_error')
+    expect(names).toContain('checkout_click')
+    expect(names).toContain('payment_started')
+    const steps = events
+      .filter((event) => event.name === 'step_view')
+      .map((event) => event.params.step_number)
+    expect(steps).toEqual([1, 2, 3, 4, 5, 6])
+    const purchase = events.find((event) => event.name === 'purchase_simulated')
+    expect(purchase?.params).toMatchObject({ variant: 'a', plan: 'comfort', segment: 'manager' })
+    expect(purchase?.params.price).toBeGreaterThan(0)
+
+    // Do měření se nesmí dostat žádné osobní údaje z formuláře.
+    const serialized = JSON.stringify(events)
+    expect(serialized).not.toMatch(/Ukázkov|example\.com|777|1986|1984/)
   })
 
   it('ve variantě B je Komfort předvybraný', () => {
-    renderFlow('comfort')
+    renderFlow('b')
     fillTrip()
     expect(screen.getByRole('radio', { name: /Komfort/ })).toBeChecked()
   })

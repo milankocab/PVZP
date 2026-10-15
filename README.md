@@ -73,6 +73,8 @@ Podíl objednávek od manažerů po měsících ve srovnání se stejným obdob�
 
 ## Google Analytics 4 v prototypu
 
-Bez proměnné `VITE_GA4_ID` se GA4 nenačte a eventy se ukládají jen lokálně pro `#/vysledky`. Nastavení pro GitHub Pages doplním ve fázi 6.
+Bez proměnné `VITE_GA4_ID` se GA4 nenačte a eventy se ukládají jen lokálně pro `#/vysledky`. Lokálně ji jde nastavit v souboru `.env.local` (vzor je v `.env.example`). Nastavení pro GitHub Pages doplním ve fázi 6.
+
+GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies, jeho řešení je nutné potvrdit s legal týmem.
 
 Do analytiky nikdy nejdou jména, e-maily, data narození ani jiný obsah formulářů.

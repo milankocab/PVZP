@@ -15,8 +15,13 @@ export function Layout({ children }: { children: ReactNode }) {
           aria-label="Hlavní navigace"
           className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"
         >
-          <Link to="/" className="text-lg font-bold text-brand-700">
-            Odjezd
+          <Link to="/" className="flex min-h-11 shrink-0 items-center">
+            <img
+              src={`${import.meta.env.BASE_URL}brand/odjezd-logo.png`}
+              alt="Odjezd"
+              width={102}
+              height={32}
+            />
           </Link>
           <ul className="flex gap-4 text-sm">
             <li>
