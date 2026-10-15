@@ -3,7 +3,7 @@
 // Částky jsou v Kč. Úpravou tohoto souboru se změní ceny v celém prototypu.
 // Testy v calculatePrice.test.ts mají pevná očekávaná čísla, po změně cen je uprav.
 
-export type RegionId = 'europe' | 'world-no-us-ca' | 'world'
+export type RegionId = 'europe' | 'world'
 export type TravelerType = 'adult' | 'child' | 'senior'
 export type PlanId = 'basic' | 'comfort' | 'premium'
 export type AddonId = 'winterSports' | 'cancellation'
@@ -12,8 +12,9 @@ export const MAX_TRIP_DAYS = 90
 export const MAX_TRAVELERS = 9
 
 // Denní sazba dospělého v balíčku Základ. Evropa odpovídá řádu trhu.
-// Svět bez USA a Kanady je 1,5× Evropa, což odpovídá poměru na trhu (ověřeno v říjnu 2026).
-// Celý svět včetně USA je 2,2× Evropa. Předpoklad z dat smyšlené firmy o škodách v USA a Kanadě.
+// Svět je jedna oblast včetně USA a Kanady, aby klient na mobilu řešil o jedno rozhodnutí méně.
+// Sazba 70 Kč (1,84× Evropa) leží mezi cenou cest do Asie a cest do USA. Předpoklad z dat
+// smyšlené firmy o škodách mimo Evropu.
 export const REGIONS: Record<RegionId, { label: string; description: string; dailyRate: number }> =
   {
     europe: {
@@ -22,15 +23,10 @@ export const REGIONS: Record<RegionId, { label: string; description: string; dai
         'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
       dailyRate: 38,
     },
-    'world-no-us-ca': {
-      label: 'Svět bez USA a Kanady',
-      description: 'Všechny státy světa kromě USA a Kanady',
-      dailyRate: 57,
-    },
     world: {
-      label: 'Celý svět',
+      label: 'Svět',
       description: 'Všechny státy světa',
-      dailyRate: 84,
+      dailyRate: 70,
     },
   }
 

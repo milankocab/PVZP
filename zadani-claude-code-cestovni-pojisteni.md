@@ -36,7 +36,7 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 
 - **Řád ceny podle trhu.** Srovnatelné cestovní pojištění stojí v Evropě desítky korun za den. Ověřil jsem to na veřejných kalkulačkách v říjnu 2026. Naše balíčky stojí na 2 dny v Evropě pro jednoho dospělého 76, 114 a 137 Kč.
 - **Cenový skok menší než skok v hodnotě.** Komfort je o 50 % dražší než Základ, ale limity rostou několikanásobně. Prémium je o dalších 20 % dražší. Vyšší balíček tak působí jako výhodná volba. Velký cenový skok by naopak držel lidi u Základu, a to je dnešní problém.
-- **Oblasti.** Svět bez USA a Kanady stojí 57 Kč za den v Základu, tedy 1,5× Evropa. Odpovídá to poměru na trhu. Celý svět včetně USA stojí 84 Kč (2,2× Evropa). Předpokládám, že tento poměr vychází z dat smyšlené firmy o škodách v USA a Kanadě.
+- **Oblasti jsou dvě, Evropa a Svět.** Svět zahrnuje všechny státy včetně USA a Kanady a stojí 70 Kč za den v Základu (1,84× Evropa). Třetí oblast „Svět bez USA a Kanady“ by dala přesnější cenu, ale klient by na mobilu řešil další rozhodnutí a rozdíl mezi dvěma „světy“ je matoucí. Předpokládám, že sazba vychází z dat smyšlené firmy o škodách mimo Evropu. Jako další krok navrhuji, aby klient zadal cílovou zemi a oblast se určila sama.
 - **Příplatky.** Zimní sporty 20 Kč na osobu a den. Kufr navíc polovinu denní ceny dospělého v balíčku za každý den. Storno 3,5 % z ceny zájezdu, nejméně 190 Kč.
 - **Slevy** se počítají jen ze základního pojistného a řetězí se. Rodinná sleva 15 %, sleva pro pojištěnce VZP 20 % a pro členy Klubu pevného zdraví dalších 10 %.
 
@@ -135,7 +135,7 @@ Data, která by hranici potvrdila na skutečném provozu: historická týdenní 
 ## Fáze 1: Cenový model (`src/pricing/`)
 
 Vše smyšlené a v jednom konfiguračním souboru `src/pricing/config.ts`, aby šlo snadno měnit:
-- **Oblast:** Evropa, Svět bez USA a Kanady, Celý svět (různá denní sazba za osobu)
+- **Oblast:** Evropa a Svět (různá denní sazba za osobu)
 - **Délka cesty:** počet dní z data odjezdu a návratu, maximum 90 dní
 - **Cestující:** dospělý, dítě do 18 let (zlevněné), senior 70+ (dražší). Rodinná sleva při 2 dospělých a alespoň 1 dítěti.
 - **Balíček:** Základ, Komfort (doporučený), Prémium. Viz sekce Obchodní kontext. Každý má limit léčebných výloh a seznam krytí pro srovnávací tabulku.
