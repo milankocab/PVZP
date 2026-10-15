@@ -4,7 +4,7 @@ Case study a prototyp. Ukazuje, jak bych jako Product Owner navrhl online sjedn�
 
 Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i podmínky jsou smyšlené.
 
-Testování v tomto projektu neprobíhá. Prototyp, hypotézy a plán ukazují, jak bych test provedl v reálném provozu.
+A/B test v tomto projektu neprobíhá. Prototyp, hypotézy a plán ukazují, jak bych test provedl v reálném provozu. Variantu B jsem předem probral v neformálních rozhovorech se 6 lidmi z okolí (5 z 6 zvolilo předvybraný balíček). Nejde o reprezentativní výzkum.
 
 ## Spuštění
 
@@ -25,11 +25,11 @@ npm run lint     # ESLint
 | `src/analytics/` | A/B přidělení a měřicí vrstva `track(event, params)` |
 | `src/pages/` | Case study `#/`, prototyp `#/sjednani`, ladicí přehled měření `#/vysledky` |
 
-Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=1` zapne nabídku vyššího balíčku před platbou. Nad formulářem je ladicí lišta s přepínačem varianty a segmentu. Na ostrém webu by nebyla.
+Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=0` vypne nabídku vyššího balíčku, která je jinak zapnutá ve všech krocích od výběru balíčku. Nad formulářem je ladicí lišta s přepínačem varianty a segmentu. Na ostrém webu by nebyla.
 
 ## A/B test
 
-- **Hypotéza 1 (A/B test).** Varianta A nemá předvybraný balíček, varianta B má předvybraný Komfort. Ověřuji, jestli předvolba zvýší AOV.
+- **Hypotéza 1 (A/B test).** Varianta A má balíčky pod sebou bez předvolby, varianta B vedle sebe s předvybraným Komfortem. Ověřuji, jestli tento způsob výběru zvýší AOV. Test mění dvě věci najednou, zdůvodnění je v case study.
 - **Hypotéza 2 (srovnání před a po).** Přínosy pro manažery dostanou obě varianty. Ověřuji, jestli vzroste podíl manažerů mezi klienty.
 - **Primární metrika** AOV. **Ochranné metriky** konverze (relativní pokles nejvýš o 5 %) a tržba na návštěvu (nesmí klesnout).
 - Zdůvodnění čísel je v zadání (`zadani-claude-code-cestovni-pojisteni.md`).
@@ -54,7 +54,7 @@ Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=mana
 5. **Týdenní kontrola.** Sleduji jen dvě věci. Jsou návštěvy rozdělené zhruba 50/50? Pokud ne, je chyba v přidělování a data nejsou důvěryhodná. Nepropadla konverze nebo tržba pod ochrannou hranici? Pokud ano, test zastavím. Vítěze v průběhu nevyhlašuji, i když jedna varianta zrovna vede.
 6. **Vyhodnocení po dosažení vzorku.** V GA4 Explore, Free form dám do řádků variantu a do sloupců segment. Hodnoty jsou uživatelé s `funnel_start`, nákupy, tržba a průměrná tržba na nákup. Významnost AOV spočítám z dat v BigQuery v GrowthBooku nebo v kalkulačce.
 7. **Rozhodnutí.** Když B vyhraje a ochranné metriky drží, zadám vývoji „varianta B na 100 %, kód varianty A smazat“. Když rozdíl není významný, nechám jednodušší variantu. Výsledek zapíšu do plánu testu.
-8. **Další test.** Na vítězné variantě porovnám nabídku vyššího balíčku před platbou zapnutou a vypnutou.
+8. **Další testy.** Když vyhraje B, porovnám B s předvolbou a bez ní. Pak na vítězné variantě nabídku vyššího balíčku zapnutou a vypnutou.
 
 ### Jak číst výsledek (vymyšlená čísla pro ilustraci)
 

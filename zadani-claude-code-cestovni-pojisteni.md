@@ -8,13 +8,13 @@ Jsem Milan, Product Owner. Hlásím se na pozici Product Owner pro online sjedn�
 - sám si s AI postaví funkční prototyp a pozná „AI slop“,
 - převezme řešení od externího dodavatele a postaví malý interní tým.
 
-Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojištění s A/B testem předvybraného balíčku** s měřením funnelu a **case study stránka**, která vysvětluje moje produktová rozhodnutí. Odkaz na case study dám do CV.
+Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojištění s A/B testem výběru balíčku** s měřením funnelu a **case study stránka**, která vysvětluje moje produktová rozhodnutí. Odkaz na case study dám do CV.
 
 ## Obchodní kontext a cíl cenového modelu
 
 - Dnes se nejvíc prodává nejnižší tarif.
 - Firma chce zvýšit AOV (průměrnou hodnotu objednávky).
-- Proto nastavujeme nový cenový model se třemi balíčky Základ, Komfort a Prémium. Doporučený je Komfort. A/B test ověřuje, jestli má smysl ho předvybrat.
+- Proto nastavujeme nový cenový model se třemi balíčky Základ, Komfort a Prémium. Doporučený je Komfort. A/B test ověřuje, jestli balíčky vedle sebe s předvybraným Komfortem zvýší AOV.
 - Hlavní cílový segment jsou manažeři. Podle (hypotetických) interních dat tento segment roste. Podíl smluv, u kterých klient při škodě nahlásil elektroniku nad 30 000 Kč, vzrostl za rok z 12 % na 18 %. Drahá pracovní elektronika je nejlepší dostupný signál, že jde o manažera.
 - Nový typ limitu je limit na zavazadla a elektroniku. Manažeři cestují s drahou technikou a limit je pro ně důvod zvolit vyšší balíček.
 
@@ -123,8 +123,8 @@ Data, která by hranici potvrdila na skutečném provozu: historická týdenní 
 - `#/` **Case study** (úvodní stránka, viz fáze 5)
 - `#/sjednani` **Prototyp**, varianta se přidělí automaticky
 - `#/sjednani?v=a` a `#/sjednani?v=b` vynucení varianty (pro recruitery a pohovor)
-- `?segment=manazer` vynucení segmentu, `?upsell=1` zapnutí nabídky vyššího balíčku před platbou
-- Nad postupem je ladicí lišta (na ostrém webu by nebyla). Přepínač varianty A/B a přepínač segmentu jsou vizuálně oddělené, každý má vlastní rámeček, barvu a vysvětlivku. Segment nemění, co návštěvník vidí, jen pod jakým segmentem se sjednání změří.
+- `?segment=manazer` vynucení segmentu, `?upsell=0` vypnutí nabídky vyššího balíčku
+- Nad postupem je sbalená ladicí lišta (na ostrém webu by nebyla). Po rozbalení má přepínač varianty A/B a přepínač segmentu, každý na jednom řádku s vysvětlivkou v bublině. Segment nemění, co návštěvník vidí, jen pod jakým segmentem se sjednání změří.
 - `#/vysledky` **Ladicí přehled měření** z aktuálního prohlížeče (funnel z lokálně uložených eventů)
 
 ## Fáze 0: Příprava
@@ -148,24 +148,25 @@ Vše smyšlené a v jednom konfiguračním souboru `src/pricing/config.ts`, aby 
 
 Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty se liší jen v kroku 2.
 
-1. **Cesta a cestující.** Kam, kdy, kdo. Volitelná otázka „Jedete pracovně?“ (ano, ne, nebo bez odpovědi). Slouží k poznání segmentu, viz fáze 4.
-2. **Výběr balíčku.** 3 karty pod sebou. Na kartách jsou nahoře přínosy pro manažery (limit na kufr, 40 000 Kč na kus elektroniky, nová cena v Prémiu, firemní elektronika). Komfort má v obou variantách štítek „Doporučujeme“. Podrobné srovnání krytí je rozbalovací, aby na mobilu nezabíralo místo.
-3. **Doplňky a potřeby.** Počet kufrů, zimní sporty, storno. Otázky na potřeby jsou vložené přímo sem (odpověď „Pojedete lyžovat?“ zapne zimní sporty). Při menším počtu kufrů, než je cestujících, se zobrazí okno s červeným upozorněním a nutným potvrzením. Rozsah otázek na potřeby podle zákona o distribuci pojištění je před spuštěním nutné potvrdit s legal týmem.
+1. **Cesta a cestující.** Kam, kdy, kdo, slevy. Nepovinná otázka „Jedete pracovně?“ (ano, ne, nebo bez odpovědi). V UI ji neoznačuji jako nepovinnou, aby ji vyplnilo co nejvíc lidí. Slouží k poznání segmentu, viz fáze 4.
+2. **Výběr balíčku.** Ve variantě A 3 karty pod sebou, ve variantě B 3 karty vedle sebe, posouvají se prstem a pod nimi je detail aktivního balíčku pod nimi. Na kartách jsou nahoře přínosy pro manažery (limit na kufr, 40 000 Kč na kus elektroniky, nová cena v Prémiu, firemní elektronika). Komfort má v obou variantách štítek „Doporučujeme“. Podrobné srovnání krytí je rozbalovací, aby na mobilu nezabíralo místo. Každý parametr krytí jde rozkliknout a bublina vysvětlí, co znamená.
+3. **Doplňky a potřeby.** Počet kufrů, sporty, storno. Otázky na potřeby jsou vložené přímo sem. Na otázku „Budete na cestě sportovat?“ klient vybere skupiny sportů. Rizikové zapnou připojištění, běžné sporty jsou v ceně. Storno je jeden přepínač „Připojistit storno zájezdu“. Při menším počtu kufrů, než je cestujících, se ukáže informace (ne červená chyba) a při pokračování okno s nutným potvrzením. Text o kufru vždy uvádí limit na kufr i sublimit 40 000 Kč na kus elektroniky. Rozsah otázek na potřeby podle zákona o distribuci pojištění je před spuštěním nutné potvrdit s legal týmem.
 4. **Údaje pojistníka a cestujících.** Tlačítko „Vyplnit ukázková data“.
 5. **Shrnutí a souhlasy.**
 6. **Platba (simulace) a potvrzení.** Apple Pay, Google Pay a karta, vše jen jako simulace.
 
 - **Přilepená lišta s průběžnou cenou** (na mobilu dole) je vidět od začátku, protože nese hlavní tlačítko „Pokračovat“. Cena se v ní ukáže od chvíle, kdy jsou vyplněné údaje kroku 1. Do té doby lišta ukazuje „Vyplňte cestu“. Dokud není vybraný balíček, ukazuje „od“ cenu Základu.
-- **Nabídka vyššího balíčku před platbou** je připravená, ale vypnutá. Je to předmět testu 2. V prototypu jde zapnout parametrem `?upsell=1`.
+- **Nabídka vyššího balíčku** je v každém kroku od výběru balíčku. Ukazuje doplatek a konkrétní rozdíly v krytí. Po přijetí zmizí natrvalo, „Teď ne“ ji schová jen v daném kroku. Je zapnutá ve výchozím stavu a je předmětem testu 3. V prototypu jde vypnout parametrem `?upsell=0`.
 
 ## Fáze 3: A/B test a hypotézy
 
 ### Hypotéza 1 (ověřuje A/B test)
 
-- **Varianta A.** Žádný balíček není předvybraný. Klient musí aktivně zvolit.
-- **Varianta B.** Komfort je předvybraný.
-- Vše ostatní je stejné, včetně štítku „Doporučujeme“ u Komfortu. Mění se jen jedna věc, takže výsledek jde přičíst právě předvolbě.
-- **Zápis.** „Pokud bude Komfort předvybraný, zvýší se průměrná hodnota objednávky (AOV), aniž by konverze z funnel_start na purchase_simulated relativně klesla o víc než 5 %, protože většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než odpovídá jeho přínosu.“
+- **Varianta A.** Balíčky pod sebou. Žádný balíček není předvybraný. Klient musí aktivně zvolit.
+- **Varianta B.** Balíčky vedle sebe, posouvají se prstem. Komfort je předvybraný.
+- Vše ostatní je stejné, včetně štítku „Doporučujeme“ u Komfortu.
+- **Proč se mění dvě věci najednou.** Testuje se celý způsob výběru balíčku. Karty vedle sebe s kartou uprostřed působí, jako by služba už byla vybraná, předvolba k tomu zobrazení patří. Opírám se o neformální rozhovory se 6 lidmi z okolí, 5 z 6 zvolilo verzi s předvybraným balíčkem. Není to reprezentativní výzkum, jen signál pro spuštění testu. Test neřekne, jestli rozdíl způsobilo zobrazení, nebo předvolba. To rozdělí test 2.
+- **Zápis.** „Pokud budou balíčky vedle sebe a Komfort předvybraný, zvýší se průměrná hodnota objednávky (AOV), aniž by konverze z funnel_start na purchase_simulated relativně klesla o víc než 5 %, protože většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než odpovídá jeho přínosu.“
 - Vyhodnocuje se pro všechny návštěvníky a předem určeně i zvlášť pro segment manažerů a ostatní.
 
 ### Hypotéza 2 (neověřuje A/B test)
@@ -194,7 +195,7 @@ Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty s
 Struktura stránky (texty napiš jako návrh, já je upravím):
 1. **Úvod** ve 3 větách. Hned na začátku jasně říká, že jde o case study zaměřenou na testování. Cílem je zjistit, jaká verze má nejlepší dopad na AOV, tržby a konverzi. Odkazy „Vyzkoušet variantu A“ a „Vyzkoušet variantu B“.
 2. **Problém.** Proč je sjednání cestovního pojištění konverzní funnel a kde typicky lidé odpadají (formuluj jako moje hypotézy, ne jako fakta o trhu).
-3. **Varianty a hypotézy.** Srovnání kroku výběru balíčku ve variantách A a B vedle sebe (na mobilu pod sebou), zápis hypotézy 1 a 2 podle fáze 3, proč hypotézu 2 neověřuje A/B test. Jak poznáme manažery a proč segmenty určuji předem.
+3. **Varianty a hypotézy.** Srovnání kroku výběru balíčku ve variantách A a B vedle sebe (na mobilu pod sebou), proč test mění dvě věci najednou, zápis hypotézy 1 a 2 podle fáze 3, proč hypotézu 2 neověřuje A/B test. Jak poznáme manažery a proč segmenty určuji předem.
 4. **Návrh experimentu.**
    - Primární metrika AOV, protože hlavní obchodní cíl je zvýšit průměrnou hodnotu objednávky.
    - Ochranné metriky. Konverze z `funnel_start` na `purchase_simulated` nesmí relativně klesnout o víc než 5 %. Tržba na návštěvu nesmí klesnout. Bez těchto pojistek by AOV mohlo vyrůst jen proto, že nakoupí méně lidí, ale dražší balíčky.
@@ -202,9 +203,9 @@ Struktura stránky (texty napiš jako návrh, já je upravím):
    - Sekundární metriky. Tržba celkem, počet dokončených a zaplacených objednávek, odpad po krocích (kde odpadá nejvíc lidí), odpad při platbě, čas do dokončení, podíl jednotlivých balíčků.
    - Délka testu, kalkulačka vzorku, kdy test ukončit a jak rozhodnout.
    - Jak data vyhodnotím v praxi (GA4, export, výpočet významnosti), viz README.
-   - Plán testů. Test 1 porovná předvybraný Komfort a výběr bez předvolby, nabídka vyššího balíčku před platbou je v obou vypnutá. Test 2 na vítězné variantě porovná nabídku zapnutou a vypnutou. Další kandidáti jsou pořadí balíčků a postup s méně kroky (test na konverzi). V jednom testu se mění jen jedna věc, jinak by nešlo poznat, co výsledek způsobilo. V prototypu jde nabídku ukázat parametrem `?upsell=1`.
+   - Plán testů. Test 1 porovná balíčky pod sebou bez předvolby a balíčky vedle sebe s předvybraným Komfortem, nabídka vyššího balíčku je v obou zapnutá. Test 2 při výhře B porovná B s předvolbou a bez ní. Test 3 na vítězné variantě porovná nabídku zapnutou a vypnutou. Další kandidáti jsou pořadí balíčků a postup s méně kroky (test na konverzi). Obvykle se v jednom testu mění jen jedna věc. Test 1 je zdůvodněná výjimka. V prototypu jde nabídku vypnout parametrem `?upsell=0`.
 5. **Měření.** Seznam eventů, co se záměrně neměří (osobní data) a proč.
-6. **Jak bych test provedl v reálném provozu.** Testování v tomto projektu neprobíhá, ani A/B test, ani test s uživateli. Case study ukazuje prototyp, hypotézy a plán. Sekce popisuje postup od plánu testu přes sběr dat v GA4, BigQuery a Looker Studiu (dříve Google Data Studio) po rozhodnutí. Podrobný postup je v README.
+6. **Jak bych test provedl v reálném provozu.** A/B test v tomto projektu neprobíhá. S uživateli proběhlo jen 6 neformálních rozhovorů v okolí (viz fáze 3). Case study ukazuje prototyp, hypotézy a plán. Sekce popisuje postup od plánu testu přes sběr dat v GA4, BigQuery a Looker Studiu (dříve Google Data Studio) po rozhodnutí. Podrobný postup je v README.
 7. **Jak jsem pracoval s AI.** Placeholder `TODO(Milan)` se strukturou: co jsem zadal, jak jsem použil CLAUDE.md a skill na kontrolu textů, co AI udělala špatně a jak jsem to poznal, co jsem rozhodl sám.
 8. **Plán prvních 90 dní.** Placeholder `TODO(Milan)`, napíšu sám.
 9. **Omezení prototypu** (smyšlené ceny a podmínky, žádný backend, žádná platba, lokální měření, žádné skutečné testování).
