@@ -14,8 +14,6 @@ const SECTIONS = [
   { id: 'experiment', title: 'Návrh experimentu' },
   { id: 'mereni', title: 'Měření' },
   { id: 'realny-provoz', title: 'Jak bych test provedl v reálném provozu' },
-  { id: 'ai', title: 'Jak jsem pracoval s AI' },
-  { id: 'plan-90-dni', title: 'Plán prvních 90 dní' },
   { id: 'omezeni', title: 'Omezení prototypu' },
 ] as const
 
@@ -57,15 +55,6 @@ function Quote({ children }: { children: ReactNode }) {
     <blockquote className="rounded-r-lg border-l-4 border-brand-700 bg-brand-50 p-4 text-slate-900">
       {children}
     </blockquote>
-  )
-}
-
-function Placeholder({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-xl border-2 border-dashed border-slate-400 bg-slate-50 p-4">
-      <p className="font-mono text-sm font-bold text-slate-700">TODO(Milan)</p>
-      {children}
-    </div>
   )
 }
 
@@ -443,26 +432,7 @@ export function CaseStudyPage() {
         </ol>
       </Section>
 
-      {/* 9. AI */}
-      <Section id="ai">
-        <Placeholder>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-800">
-            <li>Co jsem zadal.</li>
-            <li>Jak jsem použil CLAUDE.md a skill na kontrolu textů.</li>
-            <li>Co AI udělala špatně a jak jsem to poznal.</li>
-            <li>Co jsem rozhodl sám.</li>
-          </ul>
-        </Placeholder>
-      </Section>
-
-      {/* 10. 90 dní */}
-      <Section id="plan-90-dni">
-        <Placeholder>
-          <p className="mt-2 text-slate-800">Napíšu sám.</p>
-        </Placeholder>
-      </Section>
-
-      {/* 11. Omezení */}
+      {/* 9. Omezení */}
       <Section id="omezeni">
         <Bullets>
           <li>Ceny, limity a podmínky jsou smyšlené. Firma i její data jsou smyšlené.</li>

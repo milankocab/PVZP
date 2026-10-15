@@ -26,9 +26,7 @@ describe('CaseStudyPage', () => {
       '6. Návrh experimentu',
       '7. Měření',
       '8. Jak bych test provedl v reálném provozu',
-      '9. Jak jsem pracoval s AI',
-      '10. Plán prvních 90 dní',
-      '11. Omezení prototypu',
+      '9. Omezení prototypu',
     ]) {
       expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
     }

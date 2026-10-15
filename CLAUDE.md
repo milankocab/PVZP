@@ -30,7 +30,10 @@ Prototyp online sjednání cestovního pojištění ve dvou variantách (A/B tes
 
 ## Struktura
 
-- `src/pricing/` cenový model. Všechny smyšlené ceny jsou v `src/pricing/config.ts`. Balíčky Základ, Komfort (doporučený) a Prémium. Obchodní cíl je zvýšit AOV, cílový segment jsou manažeři (viz zadání).
+- `src/pricing/` cenový model. Všechny smyšlené ceny jsou v `src/pricing/config.ts`. Balíčky Základ, Komfort (doporučený) a Prémium. Základ je levný pro cenově citlivé lidi, s kufrem pro každého vyjde na 80 až 90 % Komfortu, aby se víc vyplatil Komfort.
+- Obchodní cíle jsou dva. Zvýšit AOV a získat víc manažerů. Manažer je návštěvník z kampaně s `utm_audience=manazer`, nebo kdo na „Jedete pracovně?“ odpoví ano. Segment se jen měří, obrazovky jsou pro všechny stejné.
+- A/B test (hypotéza 1) mění jen krok 2. A má balíčky pod sebou bez předvolby, B vedle sebe s předvybraným Komfortem. Hypotézu 2 (přínosy pro manažery zvýší jejich podíl) A/B test neověří.
+- Case study (`src/pages/CaseStudyPage.tsx`) jde od cíle k detailu. Pořadí je Cíl, Jak poznám manažera, Balíčky a ceny, Hypotézy, Varianty, Experiment, Měření, Reálný provoz, Omezení. Texty drž krátké. Nevymýšlej „problémy“ bez dat.
 - `src/analytics/` A/B přidělení a měřicí vrstva `track(event, params)`.
 - `src/pages/` stránky `#/`, `#/sjednani`, `#/vysledky`.
 - `src/components/` sdílené komponenty obou variant.
