@@ -120,16 +120,28 @@ body {
 /*
  * Safari na iPhonu dává poli s datem pevnou minimální šířku, takže v úzkém sloupci přetéká
  * z obrazovky. Zrušení vlastního vzhledu a min-width to opraví.
+ * Bez vlastního vzhledu Safari kreslí datum u horního okraje. Pevná výška pole, odsazení
+ * a výška řádku ho vrátí doprostřed (48 px = 2 × 2 px rámeček + 2 × 11 px odsazení + 22 px řádek).
  */
 input[type='date'] {
   -webkit-appearance: none;
   appearance: none;
   min-width: 0;
   display: block;
+  height: 3rem;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  line-height: 22px;
 }
 input[type='date']::-webkit-date-and-time-value {
   text-align: left;
   margin: 0;
+  height: 22px;
+  line-height: 22px;
+}
+input[type='date']::-webkit-datetime-edit {
+  padding: 0;
+  line-height: 22px;
 }
 
 /* Vodorovný posuvník karet balíčků. Lišta se schová, ovládá se prstem, šipkami nebo záložkami. */
