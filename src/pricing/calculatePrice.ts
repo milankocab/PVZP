@@ -1,6 +1,7 @@
 import {
   ADDON_ORDER,
   ADDONS,
+  CANCELLATION,
   FAMILY_DISCOUNT,
   MAX_TRAVELERS,
   MAX_TRIP_DAYS,
@@ -8,6 +9,7 @@ import {
   REGIONS,
   TRAVELER_TYPES,
   type AddonId,
+  type AddonPricing,
   type PlanId,
   type RegionId,
   type TravelerType,
@@ -24,11 +26,22 @@ export interface PriceInput {
   travelers: TravelerCounts
   plan: PlanId
   addons: AddonId[]
+  /** Počet pojištěných zavazadel. Výchozí je počet cestujících. Může být nižší, když lidé sdílí kufr. */
+  luggagePieces?: number
+  /** Údaje o zájezdu. Povinné jen pro připojištění storna. */
+  trip?: TripInfo
   /** Dnešní datum (YYYY-MM-DD). Kvůli testům jde předat zvenku. */
   today?: string
 }
 
-export type PriceLineKind = 'base' | 'discount' | 'addon'
+export interface TripInfo {
+  /** Celková cena zájezdu za všechny cestující v Kč. */
+  price: number
+  /** Datum zakoupení zájezdu ve formátu YYYY-MM-DD. */
+  bookedOn: string
+}
+
+export type PriceLineKind = 'base' | 'discount' | 'addon' | 'included'
 
 export interface PriceLine {
   id: string
@@ -48,7 +61,16 @@ export interface PriceBreakdown {
   total: number
 }
 
-export type ValidationField = 'region' | 'departure' | 'return' | 'travelers' | 'plan' | 'addons'
+export type ValidationField =
+  | 'region'
+  | 'departure'
+  | 'return'
+  | 'travelers'
+  | 'plan'
+  | 'addons'
+  | 'luggagePieces'
+  | 'tripPrice'
+  | 'tripBookedOn'
 
 export interface ValidationIssue {
   field: ValidationField
@@ -113,6 +135,39 @@ export function isFamilyDiscountEligible(travelers: TravelerCounts): boolean {
   )
 }
 
+/** Připojištění je v ceně zvolené varianty, takže se neúčtuje zvlášť. */
+export function isAddonIncluded(plan: PlanId, addon: AddonId): boolean {
+  return PLANS[plan]?.includedAddons.includes(addon) ?? false
+}
+
+/** Klient chce storno jako placené připojištění (ne jako součást varianty). */
+function needsPaidCancellation(input: PriceInput): boolean {
+  return input.addons.includes('cancellation') && !isAddonIncluded(input.plan, 'cancellation')
+}
+
+export function effectiveLuggagePieces(input: PriceInput): number {
+  return input.luggagePieces ?? countTravelers(input.travelers)
+}
+
+/** Pojistí se méně zavazadel než je cestujících. UI má klienta upozornit a chtít potvrzení. */
+export function isLuggageShared(input: PriceInput): boolean {
+  return (
+    input.addons.includes('luggage') &&
+    effectiveLuggagePieces(input) < countTravelers(input.travelers)
+  )
+}
+
+/**
+ * Jestli jde storno ještě sjednat. Lhůta se počítá v kalendářních dnech
+ * od zakoupení zájezdu včetně. Zájezd koupený 1. 11. jde pojistit do 8. 11.
+ */
+export function isWithinCancellationWindow(bookedOn: string, today: string = todayIso()): boolean {
+  const booked = toDayNumber(bookedOn)
+  const now = toDayNumber(today)
+  if (booked === null || now === null || booked > now) return false
+  return now - booked <= CANCELLATION.purchaseWindowDays
+}
+
 export function validatePriceInput(input: PriceInput): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
@@ -164,6 +219,43 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
     issues.push({ field: 'addons', message: 'Neznámé připojištění.' })
   }
 
+  if (input.addons.includes('luggage') && total >= 1) {
+    const pieces = effectiveLuggagePieces(input)
+    if (!Number.isInteger(pieces) || pieces < 1 || pieces > total) {
+      issues.push({
+        field: 'luggagePieces',
+        message: `Počet zavazadel musí být od 1 do ${total}.`,
+      })
+    }
+  }
+
+  if (needsPaidCancellation(input)) {
+    const price = input.trip?.price
+    const bookedOn = input.trip?.bookedOn ?? ''
+    const booked = toDayNumber(bookedOn)
+    if (price === undefined || !Number.isFinite(price) || price <= 0) {
+      issues.push({ field: 'tripPrice', message: 'Zadejte cenu zájezdu.' })
+    } else if (total >= 1 && price > CANCELLATION.maxTripPricePerPerson * total) {
+      issues.push({
+        field: 'tripPrice',
+        message: `Storno jde online sjednat pro zájezd do ${CANCELLATION.maxTripPricePerPerson.toLocaleString('cs-CZ')} Kč na osobu.`,
+      })
+    }
+    if (booked === null) {
+      issues.push({ field: 'tripBookedOn', message: 'Zadejte datum zakoupení zájezdu.' })
+    } else if (today !== null && booked > today) {
+      issues.push({
+        field: 'tripBookedOn',
+        message: 'Datum zakoupení nemůže být v budoucnosti.',
+      })
+    } else if (!isWithinCancellationWindow(bookedOn, input.today ?? todayIso())) {
+      issues.push({
+        field: 'tripBookedOn',
+        message: `Storno jde sjednat do ${CANCELLATION.purchaseWindowDays} dní od zakoupení zájezdu. Tato lhůta už uplynula.`,
+      })
+    }
+  }
+
   return issues
 }
 
@@ -171,6 +263,36 @@ function formatDays(days: number): string {
   if (days === 1) return '1 den'
   if (days >= 2 && days <= 4) return `${days} dny`
   return `${days} dní`
+}
+
+function addonPrice(
+  pricing: AddonPricing,
+  input: PriceInput,
+  days: number,
+  travelerCount: number,
+): { amount: number; detail: string } {
+  switch (pricing.type) {
+    case 'perPersonPerDay':
+      return {
+        amount: pricing.amount * travelerCount * days,
+        detail: `${pricing.amount} Kč × ${travelerCount} os. × ${formatDays(days)}`,
+      }
+    case 'perPiece': {
+      const pieces = effectiveLuggagePieces(input)
+      return {
+        amount: pricing.amount * pieces,
+        detail: `${pricing.amount} Kč × ${pieces} ${pieces === 1 ? 'zavazadlo' : pieces <= 4 ? 'zavazadla' : 'zavazadel'}`,
+      }
+    }
+    case 'tripPricePercent': {
+      const tripPrice = input.trip!.price
+      const amount = Math.max(pricing.minPremium, Math.round(tripPrice * pricing.rate))
+      return {
+        amount,
+        detail: `${(pricing.rate * 100).toLocaleString('cs-CZ')} % z ceny zájezdu ${formatCzk(tripPrice)}, nejméně ${formatCzk(pricing.minPremium)}`,
+      }
+    }
+  }
 }
 
 /**
@@ -220,20 +342,22 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
 
   let addonsTotal = 0
   for (const addonId of ADDON_ORDER) {
-    if (!input.addons.includes(addonId)) continue
     const addon = ADDONS[addonId]
-    const perDay = addon.pricing.type === 'perPersonPerDay'
-    const amount = addon.pricing.amount * travelerCount * (perDay ? days : 1)
+    if (isAddonIncluded(input.plan, addonId)) {
+      lines.push({
+        id: `included-${addonId}`,
+        kind: 'included',
+        label: addon.label,
+        detail: `V ceně varianty ${plan.label}`,
+        amount: 0,
+      })
+      continue
+    }
+    if (!input.addons.includes(addonId)) continue
+
+    const { amount, detail } = addonPrice(addon.pricing, input, days, travelerCount)
     addonsTotal += amount
-    lines.push({
-      id: `addon-${addonId}`,
-      kind: 'addon',
-      label: addon.label,
-      detail: perDay
-        ? `${addon.pricing.amount} Kč × ${travelerCount} os. × ${formatDays(days)}`
-        : `${addon.pricing.amount} Kč × ${travelerCount} os.`,
-      amount,
-    })
+    lines.push({ id: `addon-${addonId}`, kind: 'addon', label: addon.label, detail, amount })
   }
 
   return {

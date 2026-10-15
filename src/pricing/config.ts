@@ -14,17 +14,18 @@ export const REGIONS: Record<RegionId, { label: string; description: string; dai
   {
     europe: {
       label: 'Evropa',
-      description: 'Státy Evropy včetně Turecka, Kypru a Kanárských ostrovů',
+      description:
+        'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
       dailyRate: 24,
     },
     'world-no-us-ca': {
       label: 'Svět bez USA a Kanady',
-      description: 'Celý svět kromě USA a Kanady',
+      description: 'Všechny státy světa kromě USA a Kanady',
       dailyRate: 42,
     },
     world: {
       label: 'Celý svět',
-      description: 'Celý svět včetně USA a Kanady',
+      description: 'Všechny státy světa',
       dailyRate: 68,
     },
   }
@@ -56,6 +57,8 @@ export interface Plan {
   medicalLimit: number
   recommended: boolean
   shortDescription: string
+  /** Připojištění, která jsou v ceně varianty a neúčtují se zvlášť. */
+  includedAddons: AddonId[]
 }
 
 export const PLANS: Record<PlanId, Plan> = {
@@ -66,6 +69,7 @@ export const PLANS: Record<PlanId, Plan> = {
     medicalLimit: 2_000_000,
     recommended: false,
     shortDescription: 'Léčebné výlohy a asistence',
+    includedAddons: [],
   },
   standard: {
     id: 'standard',
@@ -74,14 +78,16 @@ export const PLANS: Record<PlanId, Plan> = {
     medicalLimit: 5_000_000,
     recommended: true,
     shortDescription: 'Navíc odpovědnost a úraz',
+    includedAddons: [],
   },
   comfort: {
     id: 'comfort',
     label: 'Komfort',
-    multiplier: 1.4,
+    multiplier: 1.6,
     medicalLimit: 10_000_000,
     recommended: false,
-    shortDescription: 'Vyšší limity a zpoždění letu',
+    shortDescription: 'Vyšší limity a storno zájezdu v ceně',
+    includedAddons: ['cancellation'],
   },
 }
 
@@ -114,17 +120,52 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
     values: { basic: false, standard: '200 tis. Kč', comfort: '400 tis. Kč' },
   },
   {
+    label: 'Storno zájezdu',
+    values: {
+      basic: 'Jako připojištění',
+      standard: 'Jako připojištění',
+      comfort: '20 tis. Kč na osobu',
+    },
+  },
+  {
     label: 'Zpoždění letu nad 6 hodin',
     values: { basic: false, standard: false, comfort: '3 tis. Kč' },
   },
 ]
 
+// Storno zájezdu. Na trhu se storno obvykle musí sjednat do 3 pracovních dnů od zaplacení
+// zájezdu. Odjezd nabízí delší lhůtu 7 kalendářních dní. TODO(Milan): ověřit před publikací.
+export const CANCELLATION = {
+  /** Kolik kalendářních dní od zakoupení zájezdu jde storno sjednat. */
+  purchaseWindowDays: 7,
+  /** Cena připojištění jako podíl z ceny zájezdu. */
+  premiumRate: 0.035,
+  minPremium: 190,
+  /** Nejvyšší pojistitelná cena zájezdu na osobu u připojištění. */
+  maxTripPricePerPerson: 60_000,
+  /** Limit storna, které je v ceně varianty Komfort. */
+  includedLimitPerPerson: 20_000,
+  /** Podíl storno poplatku, který se vrátí při doloženém důvodu (nemoc, úraz a podobně). */
+  documentedReasonShare: 0.8,
+  /** Podíl storno poplatku, který se vrátí při zrušení z jakéhokoli důvodu bez dokládání. */
+  anyReasonShare: 0.5,
+  /** Zrušení z jakéhokoli důvodu platí jen nejpozději tolik dní před odjezdem. */
+  anyReasonMinDaysBeforeDeparture: 30,
+}
+
+export type AddonPricing =
+  /** Násobí se počtem cestujících a dní. */
+  | { type: 'perPersonPerDay'; amount: number }
+  /** Násobí se počtem pojištěných zavazadel. */
+  | { type: 'perPiece'; amount: number; limitPerPiece: number }
+  /** Podíl z ceny zájezdu, nejméně minPremium. */
+  | { type: 'tripPricePercent'; rate: number; minPremium: number }
+
 export interface Addon {
   id: AddonId
   label: string
   description: string
-  // perPersonPerDay se násobí počtem cestujících a dní, perPersonPerTrip jen počtem cestujících.
-  pricing: { type: 'perPersonPerDay' | 'perPersonPerTrip'; amount: number }
+  pricing: AddonPricing
 }
 
 export const ADDONS: Record<AddonId, Addon> = {
@@ -137,14 +178,18 @@ export const ADDONS: Record<AddonId, Addon> = {
   cancellation: {
     id: 'cancellation',
     label: 'Storno zájezdu',
-    description: 'Vrátí 80 % storno poplatku až do 30 tis. Kč na osobu',
-    pricing: { type: 'perPersonPerTrip', amount: 290 },
+    description: `Vrátí ${CANCELLATION.documentedReasonShare * 100} % storno poplatku při doloženém důvodu. Při zrušení z jakéhokoli důvodu nejpozději ${CANCELLATION.anyReasonMinDaysBeforeDeparture} dní před odjezdem vrátí ${CANCELLATION.anyReasonShare * 100} % bez dokládání. Sjednat jde do ${CANCELLATION.purchaseWindowDays} dní od zakoupení zájezdu.`,
+    pricing: {
+      type: 'tripPricePercent',
+      rate: CANCELLATION.premiumRate,
+      minPremium: CANCELLATION.minPremium,
+    },
   },
   luggage: {
     id: 'luggage',
     label: 'Zavazadla',
-    description: 'Krádež nebo poškození zavazadel až do 20 tis. Kč na osobu',
-    pricing: { type: 'perPersonPerTrip', amount: 140 },
+    description: 'Krádež nebo poškození zavazadla až do 20 tis. Kč za každé pojištěné zavazadlo',
+    pricing: { type: 'perPiece', amount: 140, limitPerPiece: 20_000 },
   },
 }
 

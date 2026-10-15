@@ -12,6 +12,23 @@ Jsem Milan, Product Owner. Hlásím se na pozici Product Owner pro online sjedn�
 
 Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojištění ve dvou variantách (A/B test)** s měřením funnelu a **case study stránka**, která vysvětluje moje produktová rozhodnutí. Odkaz na case study dám do CV.
 
+## Obchodní kontext a cíl cenového modelu
+
+- Dnes se nejvíc prodává nejnižší tarif.
+- Firma chce zvýšit AOV (průměrnou hodnotu objednávky).
+- Proto nastavujeme nový cenový model se třemi balíčky Basic, Comfort a Premium.
+- Hlavní cílový segment jsou manažeři. Podle interních dat tento segment roste. `TODO(Milan): doplnit zdroj nebo číslo, případně formulovat jako předpoklad.`
+- Nový typ limitu je limit na zavazadla a elektroniku. Manažeři cestují s drahou technikou a limit je pro ně důvod zvolit vyšší balíček.
+
+| Parametr | Basic | Comfort | Premium |
+| --- | --- | --- | --- |
+| Limit zavazadel a elektroniky | 15 000 Kč | 50 000 Kč | 80 000 Kč |
+| Cenový odskok | základní cena | +150 % oproti Basic (velký skok) | +20 % oproti Comfort (malý skok) |
+| Plnění za elektroniku | časová cena (odpočet stáří) | časová cena (odpočet stáří) | nová cena pro věci do 2 let stáří |
+| Výhody navíc | žádné | standardní asistence | storno bez lhůty, zpoždění letu, vyšší odpovědnost |
+
+Velký skok mezi Basic a Comfort a malý skok mezi Comfort a Premium má posunout volbu od Basic k vyšším balíčkům.
+
 ## Tvrdá pravidla (dodržuj vždy)
 
 1. **Fiktivní značka.** Produkt se jmenuje **„Odjezd“** (fiktivní pojišťovna). Nepoužívej název, logo, barvy, texty ani ceny žádné skutečné pojišťovny. Na každé stránce bude v patičce: „Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i podmínky jsou smyšlené.“

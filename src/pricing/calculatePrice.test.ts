@@ -3,6 +3,8 @@ import {
   formatCzk,
   InvalidPriceInputError,
   isFamilyDiscountEligible,
+  isLuggageShared,
+  isWithinCancellationWindow,
   tripDays,
   tryCalculatePrice,
   validatePriceInput,
@@ -10,9 +12,9 @@ import {
 } from './calculatePrice'
 
 // Očekávané částky vycházejí z config.ts: Evropa 24 Kč, Svět bez USA a Kanady 42 Kč,
-// Celý svět 68 Kč za osobu a den. Základ 0,75×, Standard 1×, Komfort 1,4×.
+// Celý svět 68 Kč za osobu a den. Základ 0,75×, Standard 1×, Komfort 1,6× (storno v ceně).
 // Dítě 0,5×, senior 2×. Rodinná sleva 15 %. Zimní sporty 18 Kč/os./den,
-// storno 290 Kč/os., zavazadla 140 Kč/os.
+// storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě), zavazadla 140 Kč/kus.
 
 const TODAY = '2026-10-14'
 
@@ -106,8 +108,8 @@ describe('calculatePrice', () => {
         travelers: { adult: 0, child: 0, senior: 1 },
       }),
     )
-    // 68 × 1,4 × 2 × 7 = 1332,8.
-    expect(price.total).toBe(1333)
+    // 68 × 1,6 × 2 × 7 = 1523,2.
+    expect(price.total).toBe(1523)
   })
 
   it('kombinace všech připojištění', () => {
@@ -116,12 +118,14 @@ describe('calculatePrice', () => {
         return: '2026-11-07',
         travelers: { adult: 2, child: 0, senior: 0 },
         addons: ['winterSports', 'cancellation', 'luggage'],
+        trip: { price: 30_000, bookedOn: '2026-10-10' },
       }),
     )
-    // Základ 24 × 2 × 7 = 336, zimní sporty 18 × 2 × 7 = 252, storno 580, zavazadla 280.
+    // Základ 24 × 2 × 7 = 336, zimní sporty 18 × 2 × 7 = 252,
+    // storno 3,5 % z 30 000 = 1050, zavazadla 140 × 2 = 280.
     expect(price.basePremium).toBe(336)
-    expect(price.addonsTotal).toBe(1112)
-    expect(price.total).toBe(1448)
+    expect(price.addonsTotal).toBe(1582)
+    expect(price.total).toBe(1918)
     expect(price.lines.map((line) => line.id)).toEqual([
       'base-adult',
       'addon-winterSports',
@@ -151,7 +155,7 @@ describe('calculatePrice', () => {
     const totals = (['basic', 'standard', 'comfort'] as const).map(
       (plan) => calculatePrice(input({ plan, return: '2026-11-10' })).total,
     )
-    expect(totals).toEqual([180, 240, 336])
+    expect(totals).toEqual([180, 240, 384])
   })
 
   it('součet položek rozpadu odpovídá celkové ceně', () => {
@@ -161,10 +165,99 @@ describe('calculatePrice', () => {
         plan: 'comfort',
         return: '2026-11-23',
         travelers: { adult: 1, child: 2, senior: 1 },
-        addons: ['cancellation', 'luggage'],
+        addons: ['winterSports', 'luggage'],
+        luggagePieces: 2,
       }),
     )
     expect(price.lines.reduce((sum, line) => sum + line.amount, 0)).toBe(price.total)
+  })
+})
+
+describe('storno zájezdu', () => {
+  const withCancellation = (overrides: Partial<PriceInput> = {}) =>
+    input({
+      addons: ['cancellation'],
+      trip: { price: 20_000, bookedOn: '2026-10-14' },
+      ...overrides,
+    })
+
+  it('cena je 3,5 % z ceny zájezdu', () => {
+    const price = calculatePrice(withCancellation())
+    expect(price.addonsTotal).toBe(700)
+  })
+
+  it('u levného zájezdu platí minimální cena', () => {
+    const price = calculatePrice(withCancellation({ trip: { price: 2_000, bookedOn: TODAY } }))
+    // 3,5 % z 2 000 = 70, minimum je 190.
+    expect(price.addonsTotal).toBe(190)
+  })
+
+  it('lhůta pro sjednání je 7 kalendářních dní od koupě včetně', () => {
+    expect(isWithinCancellationWindow('2026-10-14', TODAY)).toBe(true)
+    expect(isWithinCancellationWindow('2026-10-07', TODAY)).toBe(true)
+    expect(isWithinCancellationWindow('2026-10-06', TODAY)).toBe(false)
+    expect(isWithinCancellationWindow('2026-10-15', TODAY)).toBe(false)
+  })
+
+  it('po uplynutí lhůty nejde storno sjednat', () => {
+    expect(
+      validatePriceInput(withCancellation({ trip: { price: 20_000, bookedOn: '2026-10-06' } })),
+    ).toEqual([expect.objectContaining({ field: 'tripBookedOn' })])
+  })
+
+  it('chybějící cena a datum zakoupení', () => {
+    expect(
+      validatePriceInput(withCancellation({ trip: undefined })).map((issue) => issue.field),
+    ).toEqual(['tripPrice', 'tripBookedOn'])
+    expect(
+      validatePriceInput(withCancellation({ trip: { price: 0, bookedOn: '2026-10-20' } })).map(
+        (issue) => issue.field,
+      ),
+    ).toEqual(['tripPrice', 'tripBookedOn'])
+  })
+
+  it('cena zájezdu nad limit 60 000 Kč na osobu', () => {
+    expect(
+      fieldsOf({ addons: ['cancellation'], trip: { price: 60_001, bookedOn: TODAY } }),
+    ).toEqual(['tripPrice'])
+    expect(
+      fieldsOf({ addons: ['cancellation'], trip: { price: 60_000, bookedOn: TODAY } }),
+    ).toEqual([])
+  })
+
+  it('v Komfortu je storno v ceně a nepotřebuje údaje o zájezdu', () => {
+    const price = calculatePrice(input({ plan: 'comfort', addons: ['cancellation'] }))
+    // 24 × 1,6 = 38,4.
+    expect(price.total).toBe(38)
+    expect(price.addonsTotal).toBe(0)
+    expect(price.lines.find((line) => line.id === 'included-cancellation')?.amount).toBe(0)
+  })
+})
+
+describe('zavazadla', () => {
+  it('cena se počítá za zavazadlo, výchozí je jedno na osobu', () => {
+    const travelers = { adult: 3, child: 0, senior: 0 }
+    expect(calculatePrice(input({ travelers, addons: ['luggage'] })).addonsTotal).toBe(420)
+    expect(
+      calculatePrice(input({ travelers, addons: ['luggage'], luggagePieces: 1 })).addonsTotal,
+    ).toBe(140)
+  })
+
+  it('sdílené zavazadlo se pozná, aby UI mohlo varovat', () => {
+    const travelers = { adult: 2, child: 0, senior: 0 }
+    expect(isLuggageShared(input({ travelers, addons: ['luggage'], luggagePieces: 1 }))).toBe(true)
+    expect(isLuggageShared(input({ travelers, addons: ['luggage'] }))).toBe(false)
+    expect(isLuggageShared(input({ travelers, addons: [], luggagePieces: 1 }))).toBe(false)
+  })
+
+  it('počet zavazadel musí být od 1 do počtu cestujících', () => {
+    const travelers = { adult: 2, child: 0, senior: 0 }
+    expect(fieldsOf({ travelers, addons: ['luggage'], luggagePieces: 0 })).toEqual([
+      'luggagePieces',
+    ])
+    expect(fieldsOf({ travelers, addons: ['luggage'], luggagePieces: 3 })).toEqual([
+      'luggagePieces',
+    ])
   })
 })
 
