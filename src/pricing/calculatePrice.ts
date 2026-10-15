@@ -310,20 +310,10 @@ function addonPrice(
   }
 }
 
-/**
- * Spočítá cenu pojištění a rozpad po položkách.
- * Každá položka se zaokrouhlí na celé koruny a celková cena je jejich součet,
- * aby rozpad vždy seděl s výslednou cenou.
- * Při neplatném vstupu vyhodí InvalidPriceInputError.
- */
-export function calculatePrice(input: PriceInput): PriceBreakdown {
-  const issues = validatePriceInput(input)
-  if (issues.length > 0) throw new InvalidPriceInputError(issues)
-
-  const days = tripDays(input.departure, input.return)!
-  const travelerCount = countTravelers(input.travelers)
+/** Základní pojistné balíčku po rodinné slevě, bez připojištění. */
+function planBase(planId: PlanId, input: PriceInput, days: number) {
   const region = REGIONS[input.region]
-  const plan = PLANS[input.plan]
+  const plan = PLANS[planId]
   const lines: PriceLine[] = []
 
   for (const type of Object.keys(TRAVELER_TYPES) as TravelerType[]) {
@@ -354,6 +344,62 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
       amount: -discount,
     })
   }
+
+  return { lines, basePremium, discount }
+}
+
+function extraLuggagePrice(
+  input: PriceInput,
+  days: number,
+  pieces: number,
+  netBase: number,
+): { amount: number; detail: string } {
+  const plan = PLANS[input.plan]
+  const pricing = plan.extraLuggage
+  if (pricing.type === 'fixed') {
+    return {
+      amount: pricing.amount * pieces,
+      detail: `${formatCzk(pricing.amount)} × ${formatPieces(pieces)}`,
+    }
+  }
+
+  const perPiece = Math.round(
+    REGIONS[input.region].dailyRate * plan.multiplier * pricing.dailyRateMultiplier * days,
+  )
+  const capPlan = planBase(pricing.cap.plan, input, days)
+  // Zaokrouhlení dolů, aby strop nikdy nepřekročil daný podíl.
+  const cap = Math.max(
+    0,
+    Math.floor((capPlan.basePremium - capPlan.discount) * pricing.cap.share) - netBase,
+  )
+  const uncapped = perPiece * pieces
+  if (uncapped <= cap) {
+    return { amount: uncapped, detail: `${formatCzk(perPiece)} × ${formatPieces(pieces)}` }
+  }
+  return {
+    amount: cap,
+    detail: `${formatPieces(pieces)}, doplatek nejvýše do ${Math.round(pricing.cap.share * 100)} % ceny balíčku ${PLANS[pricing.cap.plan].label}`,
+  }
+}
+
+/**
+ * Spočítá cenu pojištění a rozpad po položkách.
+ * Každá položka se zaokrouhlí na celé koruny a celková cena je jejich součet,
+ * aby rozpad vždy seděl s výslednou cenou.
+ * Při neplatném vstupu vyhodí InvalidPriceInputError.
+ */
+export function calculatePrice(input: PriceInput): PriceBreakdown {
+  const issues = validatePriceInput(input)
+  if (issues.length > 0) throw new InvalidPriceInputError(issues)
+
+  const days = tripDays(input.departure, input.return)!
+  const travelerCount = countTravelers(input.travelers)
+  const plan = PLANS[input.plan]
+  const lines: PriceLine[] = []
+
+  const base = planBase(input.plan, input, days)
+  lines.push(...base.lines)
+  const { basePremium, discount } = base
 
   const includedPieces = includedLuggagePieces(input.plan, input.travelers)
   lines.push({
@@ -386,15 +432,9 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
 
   const extraPieces = extraLuggagePieces(input)
   if (extraPieces > 0) {
-    const amount = extraPieces * plan.extraLuggagePrice
+    const { amount, detail } = extraLuggagePrice(input, days, extraPieces, basePremium - discount)
     addonsTotal += amount
-    lines.push({
-      id: 'addon-extraLuggage',
-      kind: 'addon',
-      label: 'Další kufr',
-      detail: `${formatCzk(plan.extraLuggagePrice)} × ${formatPieces(extraPieces)}`,
-      amount,
-    })
+    lines.push({ id: 'addon-extraLuggage', kind: 'addon', label: 'Další kufr', detail, amount })
   }
 
   return {

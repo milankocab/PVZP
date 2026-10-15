@@ -50,6 +50,19 @@ export const FAMILY_DISCOUNT = {
 
 export type CoverageValue = string | boolean
 
+export type ExtraLuggagePricing =
+  /** Pevná cena za kufr na celou cestu. */
+  | { type: 'fixed'; amount: number }
+  /**
+   * Cena za kufr jako násobek denní sazby dospělého v tomto balíčku a počtu dní.
+   * Doplatek za kufry ale nikdy nezvedne cenu balíčku nad podíl ceny jiného balíčku.
+   */
+  | {
+      type: 'dailyRate'
+      dailyRateMultiplier: number
+      cap: { plan: PlanId; share: number }
+    }
+
 export interface Plan {
   id: PlanId
   label: string
@@ -60,9 +73,13 @@ export interface Plan {
   luggageLimit: number
   /** Kolik zavazadel je v ceně. Jedno na celou smlouvu, nebo jedno na každého cestujícího. */
   includedLuggage: 'perPolicy' | 'perTraveler'
-  /** Cena za každé zavazadlo navíc. Je o něco vyšší, než kolik zavazadlo stojí v balíčku. */
-  extraLuggagePrice: number
-  /** Nejvyšší plnění za jeden kus elektroniky. Null znamená bez sublimitu (platí limit zavazadla). */
+  /** Cena za každý kufr navíc. Je o něco vyšší, než kolik kufr stojí v balíčku. */
+  extraLuggage: ExtraLuggagePricing
+  /**
+   * Nejvyšší plnění za jeden kus elektroniky. Null znamená bez sublimitu (platí limit kufru).
+   * 40 tis. Kč odpovídá 80. percentilu hodnoty nahlášené elektroniky u manažerů
+   * v (fiktivních) historických datech. Zdůvodnění je v zadání.
+   */
   electronicsItemLimit: number | null
   recommended: boolean
   shortDescription: string
@@ -81,7 +98,14 @@ export const PLANS: Record<PlanId, Plan> = {
     medicalLimit: 2_000_000,
     luggageLimit: 15_000,
     includedLuggage: 'perPolicy',
-    extraLuggagePrice: 150,
+    // Základ s kufry navíc musí být vždy levnější než Komfort, ale ne o moc.
+    // Kufr navíc stojí 1,5násobek ceny dospělého v Základu, takže Základ s kufrem pro
+    // každého vyjde na 70 až 90 % ceny Komfortu. Strop 90 % to hlídá i pro velké skupiny.
+    extraLuggage: {
+      type: 'dailyRate',
+      dailyRateMultiplier: 1.5,
+      cap: { plan: 'comfort', share: 0.9 },
+    },
     electronicsItemLimit: null,
     recommended: false,
     shortDescription: 'Léčebné výlohy a jeden kufr do 15 tis. Kč',
@@ -94,8 +118,8 @@ export const PLANS: Record<PlanId, Plan> = {
     medicalLimit: 5_000_000,
     luggageLimit: 50_000,
     includedLuggage: 'perTraveler',
-    extraLuggagePrice: 320,
-    electronicsItemLimit: null,
+    extraLuggage: { type: 'fixed', amount: 320 },
+    electronicsItemLimit: 40_000,
     recommended: true,
     shortDescription: 'Pracovní notebook i telefon, odpovědnost a rozšířená asistence',
     includedAddons: [],
@@ -107,9 +131,7 @@ export const PLANS: Record<PlanId, Plan> = {
     medicalLimit: 10_000_000,
     luggageLimit: 80_000,
     includedLuggage: 'perTraveler',
-    extraLuggagePrice: 380,
-    // Fiktivní interní data. Manažeři nahlašují elektroniku v průměru do 40 tis. Kč.
-    // TODO(Milan): v case study uvést jako předpoklad zadání, ne jako skutečná data.
+    extraLuggage: { type: 'fixed', amount: 380 },
     electronicsItemLimit: 40_000,
     recommended: false,
     shortDescription: 'Nová cena elektroniky, storno bez lhůty a zpoždění letu',
@@ -136,7 +158,11 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
   },
   {
     label: 'Jeden kus elektroniky',
-    values: { basic: 'do limitu kufru', comfort: 'do limitu kufru', premium: 'nejvýše 40 tis. Kč' },
+    values: {
+      basic: 'do limitu kufru',
+      comfort: 'nejvýše 40 tis. Kč',
+      premium: 'nejvýše 40 tis. Kč',
+    },
   },
   {
     label: 'Plnění za elektroniku',
@@ -145,6 +171,12 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
       comfort: 'Časová cena',
       premium: 'Nová cena u věcí do 2 let',
     },
+  },
+  {
+    // Vlastnictví se dokládá až při škodě (faktura na firmu), plnění jde majiteli věci.
+    // TODO(Milan): ověřit s právníky pojištění věci, kterou pojištěný nevlastní.
+    label: 'Firemní elektronika, kterou používáte',
+    values: { basic: false, comfort: false, premium: true },
   },
   {
     label: 'Léčebné výlohy',
@@ -243,7 +275,7 @@ export const ADDONS: Record<AddonId, Addon> = {
 export const ADDON_ORDER: AddonId[] = ['winterSports', 'cancellation']
 
 // Zavazadla jsou v každém balíčku. Klient zadá, kolik kufrů veze.
-// Kufry nad počet v ceně se doplácí podle extraLuggagePrice zvoleného balíčku.
+// Kufry nad počet v ceně se doplácí podle extraLuggage zvoleného balíčku.
 export const LUGGAGE = {
   maxPiecesPerTraveler: 2,
 }

@@ -16,7 +16,8 @@ import {
 // Dítě 0,5×, senior 2×. Rodinná sleva 15 %. Zimní sporty 18 Kč/os./den,
 // storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě).
 // Kufry v ceně: Základ 1 na smlouvu, Komfort a Prémium 1 na osobu.
-// Další kufr: Základ 150 Kč, Komfort 320 Kč, Prémium 380 Kč.
+// Další kufr: Základ 1,5× denní sazba dospělého × dny (strop 90 % ceny Komfortu),
+// Komfort 320 Kč, Prémium 380 Kč.
 
 const TODAY = '2026-10-14'
 
@@ -241,11 +242,42 @@ describe('storno zájezdu', () => {
 describe('zavazadla', () => {
   const two = { adult: 2, child: 0, senior: 0 }
 
-  it('Základ má v ceně jeden kufr na smlouvu, další se doplácí', () => {
+  it('Základ má v ceně jeden kufr na smlouvu, další se doplácí podle délky cesty', () => {
     expect(calculatePrice(input({ plan: 'basic', travelers: two })).addonsTotal).toBe(0)
+    // 1 den: 18 × 1,5 = 27 Kč za kufr.
     expect(
       calculatePrice(input({ plan: 'basic', travelers: two, luggagePieces: 2 })).addonsTotal,
-    ).toBe(150)
+    ).toBe(27)
+  })
+
+  it('Základ s kufrem pro každého je levnější než Komfort, ale ne o moc', () => {
+    const week = { return: '2026-11-07' }
+    for (const adult of [2, 3, 4, 6, 9]) {
+      const travelers = { adult, child: 0, senior: 0 }
+      const basic = calculatePrice(
+        input({ ...week, plan: 'basic', travelers, luggagePieces: adult }),
+      ).total
+      const comfort = calculatePrice(input({ ...week, plan: 'comfort', travelers })).total
+      expect(basic / comfort).toBeGreaterThanOrEqual(0.7)
+      expect(basic / comfort).toBeLessThanOrEqual(0.9)
+    }
+  })
+
+  it('dvojice na týden v Evropě, Základ se dvěma kufry', () => {
+    const price = calculatePrice(
+      input({ return: '2026-11-07', plan: 'basic', travelers: two, luggagePieces: 2 }),
+    )
+    // Základ 18 × 2 × 7 = 252, kufr navíc 18 × 1,5 × 7 = 189. Komfort by stál 630.
+    expect(price.total).toBe(441)
+  })
+
+  it('strop 90 % ceny Komfortu platí i pro velkou skupinu s mnoha kufry', () => {
+    const travelers = { adult: 6, child: 0, senior: 0 }
+    const price = calculatePrice(
+      input({ return: '2026-11-07', plan: 'basic', travelers, luggagePieces: 12 }),
+    )
+    // Komfort 45 × 6 × 7 = 1890, 90 % = 1701. Základ 756, doplatek nejvýše 945.
+    expect(price.total).toBe(1701)
   })
 
   it('Komfort a Prémium mají v ceně kufr pro každého', () => {

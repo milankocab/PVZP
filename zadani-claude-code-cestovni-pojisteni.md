@@ -1,7 +1,5 @@
 # Zadání pro Claude Code: prototyp online sjednání cestovního pojištění + case study
 
-> Tento soubor vlož do Claude Code jako první zprávu (nebo ho ulož do repozitáře jako `ZADANI.md` a napiš „Přečti ZADANI.md a začni fází 0“).
-
 ## Kontext (pro tebe, Claude Code)
 
 Jsem Milan, Product Owner. Hlásím se na pozici Product Owner pro online sjednání pojištění v pojišťovně, která staví novou digitální jednotku. První produkt je online sjednání cestovního pojištění. Firma chce PO, který:
@@ -24,8 +22,9 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 | --- | --- | --- | --- |
 | Limit zavazadel a elektroniky (na jeden kufr) | 15 000 Kč | 50 000 Kč | 80 000 Kč |
 | Kufry v ceně | 1 na smlouvu | 1 na osobu | 1 na osobu |
-| Další kufr (připojištění) | 150 Kč | 320 Kč | 380 Kč |
-| Limit na jeden kus elektroniky | do limitu kufru | do limitu kufru | 40 000 Kč |
+| Další kufr (připojištění) | 1,5× denní cena dospělého, nejvýše do 90 % ceny Komfortu | 320 Kč | 380 Kč |
+| Limit na jeden kus elektroniky | do limitu kufru | 40 000 Kč | 40 000 Kč |
+| Firemní elektronika | ne | ne | ano, vlastnictví se dokládá až při škodě |
 | Cenový odskok | základní cena | +150 % oproti Základu (velký skok) | +20 % oproti Komfortu (malý skok) |
 | Plnění za elektroniku | časová cena (odpočet stáří) | časová cena (odpočet stáří) | nová cena pro věci do 2 let stáří |
 | Asistence | lékařská nonstop | lékařská a rozšířená (ztráta dokladů, právní pomoc) | lékařská a rozšířená |
@@ -33,9 +32,29 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 
 Velký skok mezi Základem a Komfortem a malý skok mezi Komfortem a Prémiem má posunout volbu od Základu k vyšším balíčkům.
 
-Limit 40 000 Kč na kus vychází z fiktivních interních dat. Manažeři nahlašují elektroniku v průměru do 40 000 Kč. V case study to uvádím jako předpoklad zadání.
+#### Proč sublimit 40 000 Kč na kus
+
+Pracuji s hypotetickou situací. Firma je smyšlená, ale má historická data o škodách. Z dat vychází, že **80 % nahlášené elektroniky u manažerů má hodnotu do 40 000 Kč** (80. percentil). Podle tohoto čísla jsem sublimit nastavil.
+
+Proč percentil, a ne průměr nebo medián:
+- **Průměr** zkreslí pár drahých kusů. Jeden profesionální fotoaparát za 150 000 Kč zvedne průměr, i když ho skoro nikdo nevozí. Průměr navíc neříká, kolik klientů limit pokryje.
+- **Medián** je odolný vůči extrémům, ale limit na mediánu znamená, že polovina hlášení nebude zaplacená celá. U balíčků, které mají přesvědčit manažery, by to bylo málo.
+- **Percentil** odpovídá přesně na otázku, kterou rozhoduji. Jaký podíl klientů chci pojistit celý? Při 80. percentilu dostanou 4 z 5 klientů plnou náhradu.
+
+Proč 80 %, a ne 70 % nebo 90 %:
+- Při 70 % by plnou náhradu nedostal každý třetí klient. To je na balíček pro manažery málo.
+- Ceny elektroniky mají dlouhý konec. Posun z 80 % na 90 % by vyžadoval výrazně vyšší limit kvůli malému počtu drahých kusů. Právě u nich je zároveň nejvyšší riziko podvodu.
+- 80 % je tedy kompromis mezi spokojeností klientů a rizikem pojišťovny. Je to obchodní rozhodnutí, ne pravidlo trhu. Po spuštění ho ověřím na skutečných škodách.
+
+Sublimit platí v Komfortu i Prémiu. Prémium se liší vyšším limitem na kufr (víc kusů v jednom kufru), novou cenou u věcí do 2 let a krytím firemní elektroniky.
+
+#### Firemní elektronika v Prémiu
+
+Při sjednání se na firmu neptám, protože by to nikdo nevyplňoval. Krytí v Prémiu zahrnuje i elektroniku, kterou klient používá a patří jeho firmě. Vlastnictví se dokládá až při hlášení škody fakturou na firmu a plnění dostane majitel věci. Při krádeži je nutný protokol od policie. Jedno zařízení nejde proplatit dvakrát, hlídá se podle sériového čísla nebo IMEI. Spoluúčast nezavádím, protože na trhu není jednotným standardem. `TODO(Milan): ověřit s právníky pojištění věci, kterou pojištěný nevlastní, a souběh s pojištěním majetku firmy.`
 
 Základ s jedním kufrem na smlouvu je levná vstupní varianta, například pro krátkou cestu s jedním kufrem. Když cestuje víc lidí s jedním kufrem, aplikace je upozorní, že limit platí na kufr, a nabídne další kufr nebo vyšší balíček.
+
+Základ s kufrem pro každého je vždy levnější než Komfort, ale ne o moc. Vychází na 70 až 90 % ceny Komfortu. Kufr navíc v Základu proto stojí 1,5násobek denní ceny dospělého za každý den cesty a doplatek nikdy nepřekročí 90 % ceny Komfortu. Pevná cena by nefungovala, protože cena balíčků roste s délkou cesty a oblastí. U krátké cesty by kufr navíc vyšel dráž než Komfort, u dlouhé by byl rozdíl příliš velký.
 
 ### Platba na mobilu
 
@@ -121,17 +140,22 @@ Obě varianty sdílí komponenty a cenový model, liší se jen tok a prezentace
   - vždy uloží event lokálně (pro `#/vysledky`),
   - pokud je nastavené `VITE_GA4_ID`, pošle event i do Google Analytics 4 (gtag). Bez ID se GA4 nenačte.
   - posílá jen: název eventu, variantu, číslo a název kroku, oblast, počet cestujících, zvolenou variantu krytí, cenu zaokrouhlenou na stovky. **Nikdy jména, e-maily, data narození.**
-- **Eventy funnelu:** `funnel_start`, `step_view`, `step_complete`, `price_shown` (poprvé), `plan_selected`, `addon_toggled`, `validation_error`, `checkout_click`, `purchase_simulated`.
+- **Eventy funnelu:** `funnel_start`, `step_view`, `step_complete`, `price_shown` (poprvé), `plan_selected`, `addon_toggled`, `validation_error`, `checkout_click`, `payment_started`, `purchase_simulated`. Rozdíl mezi `payment_started` a `purchase_simulated` ukazuje odpad přímo při platbě.
 - **`#/vysledky`:** tabulka a jednoduchý graf funnelu po krocích pro obě varianty z lokálních dat, tlačítko „Smazat data“. Jasný popisek, že jde jen o data z tohoto prohlížeče.
-- **Kalkulačka velikosti vzorku** v case study: vstupy výchozí konverze, minimální detekovatelný efekt, hladina významnosti 5 %, síla 80 %. Výstup potřebný počet návštěv na variantu. Výpočet ověř testem proti známé hodnotě.
+- **Kalkulačka velikosti vzorku** v case study: hladina významnosti 5 %, síla 80 %. Dva režimy. Pro AOV (primární metrika) vstupy průměrná cena objednávky, směrodatná odchylka a minimální detekovatelný efekt, výstup počet objednávek a návštěv na variantu. Pro konverzi (ochranná metrika) vstupy výchozí konverze a minimální detekovatelný efekt. Výpočet ověř testem proti známé hodnotě.
 
 ## Fáze 5: Case study (`#/`)
 
 Struktura stránky (texty napiš jako návrh, já je upravím):
 1. **Úvod** ve 3 větách. Co jsem postavil, proč a odkazy „Vyzkoušet variantu A“ a „Vyzkoušet variantu B“.
 2. **Problém.** Proč je sjednání cestovního pojištění konverzní funnel a kde typicky lidé odpadají (formuluj jako moje hypotézy, ne jako fakta o trhu).
-3. **Dvě varianty a hypotéza.** Srovnání A a B vedle sebe (schéma kroků), formální zápis hypotézy: „Pokud ukážeme cenu od prvního kroku a sloučíme kroky, zvýší se podíl dokončených sjednání z funnel_start na purchase_simulated, protože…“
-4. **Návrh experimentu.** Primární metrika, sekundární metriky (odpad po krocích, čas do dokončení), ochranné metriky (podíl připojištění, průměrná cena), délka testu, kalkulačka vzorku, kdy test ukončit a jak rozhodnout.
+3. **Dvě varianty a hypotéza.** Srovnání A a B vedle sebe (schéma kroků), formální zápis hypotézy: „Pokud ukážeme cenu od prvního kroku, sloučíme kroky a předvybereme Komfort, zvýší se průměrná hodnota objednávky (AOV), aniž by konverze z funnel_start na purchase_simulated klesla pod stanovenou hranici, protože…“
+4. **Návrh experimentu.**
+   - Primární metrika AOV, protože hlavní obchodní cíl je zvýšit průměrnou hodnotu objednávky.
+   - Ochranné metriky. Konverze z `funnel_start` na `purchase_simulated` nesmí relativně klesnout o víc než 5 % (`TODO(Milan): potvrdit hranici`). Tržba na návštěvu nesmí klesnout. Bez těchto pojistek by AOV mohlo vyrůst jen proto, že nakoupí méně lidí, ale dražší balíčky.
+   - Sekundární metriky. Tržba celkem, počet dokončených a zaplacených objednávek, odpad po krocích (kde odpadá nejvíc lidí), odpad při platbě, čas do dokončení, podíl jednotlivých balíčků.
+   - Délka testu, kalkulačka vzorku, kdy test ukončit a jak rozhodnout.
+   - Plán testů. Test 1 porovná postup A a B, nabídka vyššího balíčku před platbou je v obou vypnutá. Test 2 na vítězné variantě porovná nabídku zapnutou a vypnutou. V jednom testu se mění jen jedna věc, jinak by nešlo poznat, co výsledek způsobilo. V prototypu jde nabídku ukázat parametrem `?upsell=1`.
 5. **Měření.** Seznam eventů, co se záměrně neměří (osobní data) a proč.
 6. **Uživatelský test.** Placeholder sekce `TODO(Milan)` pro výsledky testu s 5 lidmi (úkol, co jsem pozoroval, co jsem změnil).
 7. **Jak jsem pracoval s AI.** Placeholder `TODO(Milan)` se strukturou: co jsem zadal, jak jsem použil CLAUDE.md a skill na kontrolu textů, co AI udělala špatně a jak jsem to poznal, co jsem rozhodl sám.
