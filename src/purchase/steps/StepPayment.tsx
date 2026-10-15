@@ -1,3 +1,4 @@
+import { CreditCard, Lock, Smartphone, Wallet } from 'lucide-react'
 import { ChoiceCards, Section } from '../components/ui'
 import { type PaymentMethod, type StepProps } from '../stepProps'
 
@@ -6,21 +7,36 @@ import { type PaymentMethod, type StepProps } from '../stepProps'
 export function StepPayment({ state, update, errors }: StepProps) {
   return (
     <div className="space-y-4">
-      <Section title="Způsob platby">
+      <Section title="Způsob platby" icon={Lock} tone="brand">
         <ChoiceCards<PaymentMethod>
           name="paymentMethod"
           legend="Jak chcete zaplatit?"
+          legendHidden
           hint="Platba je jen simulace. Nic se neodesílá a nic se nezaplatí."
           value={state.paymentMethod}
           onChange={(paymentMethod) => update({ paymentMethod })}
           error={errors.paymentMethod}
           options={[
-            { value: 'applePay', label: 'Apple Pay', description: 'Simulace' },
-            { value: 'googlePay', label: 'Google Pay', description: 'Simulace' },
+            {
+              value: 'applePay',
+              label: 'Apple Pay',
+              description: 'Simulace',
+              icon: Smartphone,
+              tone: 'slate',
+            },
+            {
+              value: 'googlePay',
+              label: 'Google Pay',
+              description: 'Simulace',
+              icon: Wallet,
+              tone: 'sky',
+            },
             {
               value: 'card',
               label: 'Platební karta',
               description: 'Simulace, číslo karty se nezadává',
+              icon: CreditCard,
+              tone: 'violet',
             },
           ]}
         />

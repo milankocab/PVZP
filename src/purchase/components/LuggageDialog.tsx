@@ -1,3 +1,4 @@
+import { Luggage } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { PLANS, formatCzk, formatPieces, type PlanId } from '../../pricing'
 
@@ -42,13 +43,19 @@ export function LuggageDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby="luggage-dialog-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl p-0 backdrop:bg-slate-900/60"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl p-0 shadow-2xl backdrop:bg-ink/50 backdrop:backdrop-blur-[2px]"
     >
-      <div className="space-y-4 p-5">
-        <h2 id="luggage-dialog-title" className="text-xl font-bold text-red-700">
+      <div className="animate-rise space-y-4 p-5">
+        <span
+          aria-hidden="true"
+          className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800"
+        >
+          <Luggage className="size-6" />
+        </span>
+        <h2 id="luggage-dialog-title" className="text-xl font-extrabold text-ink">
           Pojišťujete méně kufrů, než kolik vás jede
         </h2>
-        <p className="font-semibold text-red-700">
+        <p className="rounded-2xl bg-amber-50 p-3 font-semibold text-amber-950 ring-1 ring-amber-200">
           Jede vás {travelerCount} a pojišťujete {formatPieces(pieces)}. Limit {limit} platí na
           kufr. Věci více lidí v jednom kufru jsou tak pojištěné dohromady jen do {limit}.
         </p>
@@ -60,7 +67,7 @@ export function LuggageDialog({
           <button
             type="button"
             onClick={onAddPiece}
-            className="min-h-12 rounded-lg bg-brand-700 px-4 font-semibold text-white hover:bg-brand-800"
+            className="min-h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 px-4 font-bold text-white transition active:scale-[0.97]"
           >
             Přidat kufr
           </button>
@@ -68,7 +75,7 @@ export function LuggageDialog({
             <button
               type="button"
               onClick={onUpgrade}
-              className="min-h-12 rounded-lg border-2 border-brand-700 px-4 font-semibold text-brand-700"
+              className="min-h-12 rounded-2xl border-2 border-brand-600 px-4 font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.97]"
             >
               Přejít na Komfort s kufrem pro každého
             </button>
@@ -76,7 +83,7 @@ export function LuggageDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="min-h-12 rounded-lg px-4 font-semibold text-slate-800 underline underline-offset-2"
+            className="min-h-12 rounded-2xl px-4 font-semibold text-slate-700 underline underline-offset-2"
           >
             Rozumím, pokračovat s {pieces === 1 ? '1 kufrem' : `${pieces} kufry`}
           </button>

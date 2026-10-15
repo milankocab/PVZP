@@ -1,3 +1,4 @@
+import { Sparkles, UserRound, Users } from 'lucide-react'
 import { TRAVELER_TYPES } from '../../pricing'
 import { Checkbox, Section, TextField } from '../components/ui'
 import {
@@ -20,7 +21,7 @@ function PersonFields({
   errors: StepProps['errors']
 }) {
   return (
-    <div className="ph-no-capture grid gap-4 sm:grid-cols-2">
+    <div className="ph-no-capture grid min-w-0 gap-4 sm:grid-cols-2">
       <TextField
         id={`${prefix}-firstName`}
         label="Jméno"
@@ -64,7 +65,7 @@ export function StepDetails({ state, update, errors }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-brand-50 p-4 text-sm text-slate-800">
+      <div className="animate-rise rounded-3xl bg-gradient-to-br from-brand-50 to-sky-50 p-4 text-sm text-slate-800 ring-1 ring-brand-100">
         <p>
           Prototyp. Údaje se nikam neodesílají a nejdou do analytiky. Pro rychlé vyzkoušení použijte
           smyšlená data.
@@ -72,20 +73,21 @@ export function StepDetails({ state, update, errors }: StepProps) {
         <button
           type="button"
           onClick={() => update(sampleDetails(state))}
-          className="mt-2 min-h-12 rounded-lg border-2 border-brand-700 bg-white px-4 font-semibold text-brand-700"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 font-semibold text-brand-700 shadow-sm ring-1 ring-brand-100 transition hover:bg-brand-50 active:scale-95"
         >
+          <Sparkles aria-hidden="true" className="size-4" />
           Vyplnit ukázková data
         </button>
       </div>
 
-      <Section title="Pojistník">
+      <Section title="Pojistník" icon={UserRound} tone="brand">
         <PersonFields
           prefix="policyholder"
           person={state.policyholder}
           onChange={(patch) => update({ policyholder: { ...state.policyholder, ...patch } })}
           errors={errors}
         />
-        <div className="ph-no-capture grid gap-4 sm:grid-cols-2">
+        <div className="ph-no-capture grid min-w-0 gap-4 sm:grid-cols-2">
           <TextField
             id="policyholder-email"
             type="email"
@@ -123,6 +125,8 @@ export function StepDetails({ state, update, errors }: StepProps) {
         return (
           <Section
             key={index}
+            icon={Users}
+            tone="amber"
             title={`Cestující ${index + 1} · ${TRAVELER_TYPES[type].label.toLowerCase()} (${
               TRAVELER_TYPES[type].ageHint
             })`}
