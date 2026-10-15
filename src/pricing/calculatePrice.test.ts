@@ -14,7 +14,9 @@ import {
 // Očekávané částky vycházejí z config.ts: Evropa 18 Kč, Svět bez USA a Kanady 32 Kč,
 // Celý svět 52 Kč za osobu a den. Základ 1×, Komfort 2,5×, Prémium 3× (storno v ceně).
 // Dítě 0,5×, senior 2×. Rodinná sleva 15 %. Zimní sporty 18 Kč/os./den,
-// storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě), zavazadla 140 Kč/kus.
+// storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě).
+// Kufry v ceně: Základ 1 na smlouvu, Komfort a Prémium 1 na osobu.
+// Další kufr: Základ 150 Kč, Komfort 320 Kč, Prémium 380 Kč.
 
 const TODAY = '2026-10-14'
 
@@ -117,26 +119,28 @@ describe('calculatePrice', () => {
       input({
         return: '2026-11-07',
         travelers: { adult: 2, child: 0, senior: 0 },
-        addons: ['winterSports', 'cancellation', 'luggage'],
+        addons: ['winterSports', 'cancellation'],
+        luggagePieces: 3,
         trip: { price: 30_000, bookedOn: '2026-10-10' },
       }),
     )
     // Komfort 45 × 2 × 7 = 630, zimní sporty 18 × 2 × 7 = 252,
-    // storno 3,5 % z 30 000 = 1050, zavazadla 140 × 2 = 280.
+    // storno 3,5 % z 30 000 = 1050, třetí kufr 320.
     expect(price.basePremium).toBe(630)
-    expect(price.addonsTotal).toBe(1582)
-    expect(price.total).toBe(2212)
+    expect(price.addonsTotal).toBe(1622)
+    expect(price.total).toBe(2252)
     expect(price.lines.map((line) => line.id)).toEqual([
       'base-adult',
+      'included-luggage',
       'addon-winterSports',
       'addon-cancellation',
-      'addon-luggage',
+      'addon-extraLuggage',
     ])
   })
 
   it('duplicitní připojištění se počítá jednou', () => {
-    const price = calculatePrice(input({ addons: ['luggage', 'luggage'] }))
-    expect(price.total).toBe(45 + 140)
+    const price = calculatePrice(input({ addons: ['winterSports', 'winterSports'] }))
+    expect(price.total).toBe(45 + 18)
   })
 
   it('dítě v základní variantě', () => {
@@ -165,8 +169,8 @@ describe('calculatePrice', () => {
         plan: 'premium',
         return: '2026-11-23',
         travelers: { adult: 1, child: 2, senior: 1 },
-        addons: ['winterSports', 'luggage'],
-        luggagePieces: 2,
+        addons: ['winterSports'],
+        luggagePieces: 6,
       }),
     )
     expect(price.lines.reduce((sum, line) => sum + line.amount, 0)).toBe(price.total)
@@ -235,29 +239,43 @@ describe('storno zájezdu', () => {
 })
 
 describe('zavazadla', () => {
-  it('cena se počítá za zavazadlo, výchozí je jedno na osobu', () => {
-    const travelers = { adult: 3, child: 0, senior: 0 }
-    expect(calculatePrice(input({ travelers, addons: ['luggage'] })).addonsTotal).toBe(420)
+  const two = { adult: 2, child: 0, senior: 0 }
+
+  it('Základ má v ceně jeden kufr na smlouvu, další se doplácí', () => {
+    expect(calculatePrice(input({ plan: 'basic', travelers: two })).addonsTotal).toBe(0)
     expect(
-      calculatePrice(input({ travelers, addons: ['luggage'], luggagePieces: 1 })).addonsTotal,
-    ).toBe(140)
+      calculatePrice(input({ plan: 'basic', travelers: two, luggagePieces: 2 })).addonsTotal,
+    ).toBe(150)
   })
 
-  it('sdílené zavazadlo se pozná, aby UI mohlo varovat', () => {
-    const travelers = { adult: 2, child: 0, senior: 0 }
-    expect(isLuggageShared(input({ travelers, addons: ['luggage'], luggagePieces: 1 }))).toBe(true)
-    expect(isLuggageShared(input({ travelers, addons: ['luggage'] }))).toBe(false)
-    expect(isLuggageShared(input({ travelers, addons: [], luggagePieces: 1 }))).toBe(false)
+  it('Komfort a Prémium mají v ceně kufr pro každého', () => {
+    expect(calculatePrice(input({ plan: 'comfort', travelers: two })).addonsTotal).toBe(0)
+    expect(
+      calculatePrice(input({ plan: 'comfort', travelers: two, luggagePieces: 3 })).addonsTotal,
+    ).toBe(320)
+    expect(
+      calculatePrice(input({ plan: 'premium', travelers: two, luggagePieces: 4 })).addonsTotal,
+    ).toBe(760)
   })
 
-  it('počet zavazadel musí být od 1 do počtu cestujících', () => {
-    const travelers = { adult: 2, child: 0, senior: 0 }
-    expect(fieldsOf({ travelers, addons: ['luggage'], luggagePieces: 0 })).toEqual([
-      'luggagePieces',
-    ])
-    expect(fieldsOf({ travelers, addons: ['luggage'], luggagePieces: 3 })).toEqual([
-      'luggagePieces',
-    ])
+  it('méně kufrů než cestujících nesnižuje cenu', () => {
+    expect(calculatePrice(input({ travelers: two, luggagePieces: 1 })).total).toBe(
+      calculatePrice(input({ travelers: two })).total,
+    )
+  })
+
+  it('sdílený kufr se pozná, aby UI mohlo varovat', () => {
+    expect(isLuggageShared(input({ travelers: two, luggagePieces: 1 }))).toBe(true)
+    expect(isLuggageShared(input({ travelers: two }))).toBe(false)
+    // Základ má v ceně jen jeden kufr, takže dvojice ve výchozím stavu sdílí.
+    expect(isLuggageShared(input({ plan: 'basic', travelers: two }))).toBe(true)
+    expect(isLuggageShared(input({ plan: 'basic' }))).toBe(false)
+  })
+
+  it('počet kufrů musí být od 1 do dvojnásobku cestujících', () => {
+    expect(fieldsOf({ travelers: two, luggagePieces: 0 })).toEqual(['luggagePieces'])
+    expect(fieldsOf({ travelers: two, luggagePieces: 5 })).toEqual(['luggagePieces'])
+    expect(fieldsOf({ travelers: two, luggagePieces: 4 })).toEqual([])
   })
 })
 

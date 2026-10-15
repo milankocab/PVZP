@@ -23,13 +23,27 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 | Parametr | Základ | Komfort | Prémium |
 | --- | --- | --- | --- |
 | Limit zavazadel a elektroniky (na jeden kufr) | 15 000 Kč | 50 000 Kč | 80 000 Kč |
-| Limit na jeden kus elektroniky | do limitu kufru | do limitu kufru | 50 000 Kč |
+| Kufry v ceně | 1 na smlouvu | 1 na osobu | 1 na osobu |
+| Další kufr (připojištění) | 150 Kč | 320 Kč | 380 Kč |
+| Limit na jeden kus elektroniky | do limitu kufru | do limitu kufru | 40 000 Kč |
 | Cenový odskok | základní cena | +150 % oproti Základu (velký skok) | +20 % oproti Komfortu (malý skok) |
 | Plnění za elektroniku | časová cena (odpočet stáří) | časová cena (odpočet stáří) | nová cena pro věci do 2 let stáří |
 | Asistence | lékařská nonstop | lékařská a rozšířená (ztráta dokladů, právní pomoc) | lékařská a rozšířená |
 | Výhody navíc | žádné | odpovědnost, úraz | storno v ceně bez lhůty od koupě, zpoždění letu, vyšší odpovědnost |
 
 Velký skok mezi Základem a Komfortem a malý skok mezi Komfortem a Prémiem má posunout volbu od Základu k vyšším balíčkům.
+
+Limit 40 000 Kč na kus vychází z fiktivních interních dat. Manažeři nahlašují elektroniku v průměru do 40 000 Kč. V case study to uvádím jako předpoklad zadání.
+
+Základ s jedním kufrem na smlouvu je levná vstupní varianta, například pro krátkou cestu s jedním kufrem. Když cestuje víc lidí s jedním kufrem, aplikace je upozorní, že limit platí na kufr, a nabídne další kufr nebo vyšší balíček.
+
+### Platba na mobilu
+
+Ve variantách nabízím Apple Pay a Google Pay (v prototypu jen simulace). Při 70 % sjednání na mobilu odpadá ruční vyplňování platební karty, což je na telefonu jeden z nejpracnějších kroků.
+
+### Další fáze mimo tento prototyp
+
+- **B2B.** Nákup na firmu (IČO, faktura), firemní a roční pojištění pro často cestující manažery. Tento prototyp řeší jen B2C. B2B je další fáze, protože dál rozvíjí segment manažerů.
 
 ### Mobil na prvním místě
 

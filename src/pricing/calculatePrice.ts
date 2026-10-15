@@ -2,6 +2,7 @@ import {
   ADDON_ORDER,
   ADDONS,
   CANCELLATION,
+  LUGGAGE,
   FAMILY_DISCOUNT,
   MAX_TRAVELERS,
   MAX_TRIP_DAYS,
@@ -26,7 +27,7 @@ export interface PriceInput {
   travelers: TravelerCounts
   plan: PlanId
   addons: AddonId[]
-  /** Počet pojištěných zavazadel. Výchozí je počet cestujících. Může být nižší, když lidé sdílí kufr. */
+  /** Počet kufrů, které klient veze. Výchozí je počet kufrů v ceně balíčku. */
   luggagePieces?: number
   /** Údaje o zájezdu. Povinné jen pro připojištění storna. */
   trip?: TripInfo
@@ -145,16 +146,29 @@ function needsPaidCancellation(input: PriceInput): boolean {
   return input.addons.includes('cancellation') && !isAddonIncluded(input.plan, 'cancellation')
 }
 
-export function effectiveLuggagePieces(input: PriceInput): number {
-  return input.luggagePieces ?? countTravelers(input.travelers)
+/** Kolik kufrů je v ceně balíčku. */
+export function includedLuggagePieces(plan: PlanId, travelers: TravelerCounts): number {
+  return PLANS[plan]?.includedLuggage === 'perTraveler' ? countTravelers(travelers) : 1
 }
 
-/** Pojistí se méně zavazadel než je cestujících. UI má klienta upozornit a chtít potvrzení. */
-export function isLuggageShared(input: PriceInput): boolean {
-  return (
-    input.addons.includes('luggage') &&
-    effectiveLuggagePieces(input) < countTravelers(input.travelers)
+export function effectiveLuggagePieces(input: PriceInput): number {
+  return input.luggagePieces ?? includedLuggagePieces(input.plan, input.travelers)
+}
+
+/** Kolik kufrů se doplácí nad rámec balíčku. */
+export function extraLuggagePieces(input: PriceInput): number {
+  return Math.max(
+    0,
+    effectiveLuggagePieces(input) - includedLuggagePieces(input.plan, input.travelers),
   )
+}
+
+/**
+ * Pojistí se méně kufrů, než je cestujících. Limit platí na kufr, takže ve sdíleném kufru
+ * jsou věci více lidí jen do limitu jednoho kufru. UI má klienta upozornit a chtít potvrzení.
+ */
+export function isLuggageShared(input: PriceInput): boolean {
+  return effectiveLuggagePieces(input) < countTravelers(input.travelers)
 }
 
 /**
@@ -219,12 +233,14 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
     issues.push({ field: 'addons', message: 'Neznámé připojištění.' })
   }
 
-  if (input.addons.includes('luggage') && total >= 1) {
+  const travelersValid = !issues.some((issue) => issue.field === 'travelers')
+  if (travelersValid && input.plan in PLANS) {
     const pieces = effectiveLuggagePieces(input)
-    if (!Number.isInteger(pieces) || pieces < 1 || pieces > total) {
+    const maxPieces = total * LUGGAGE.maxPiecesPerTraveler
+    if (!Number.isInteger(pieces) || pieces < 1 || pieces > maxPieces) {
       issues.push({
         field: 'luggagePieces',
-        message: `Počet zavazadel musí být od 1 do ${total}.`,
+        message: `Počet kufrů musí být od 1 do ${maxPieces}.`,
       })
     }
   }
@@ -259,6 +275,12 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
   return issues
 }
 
+function formatPieces(pieces: number): string {
+  if (pieces === 1) return '1 kufr'
+  if (pieces >= 2 && pieces <= 4) return `${pieces} kufry`
+  return `${pieces} kufrů`
+}
+
 function formatDays(days: number): string {
   if (days === 1) return '1 den'
   if (days >= 2 && days <= 4) return `${days} dny`
@@ -277,13 +299,6 @@ function addonPrice(
         amount: pricing.amount * travelerCount * days,
         detail: `${pricing.amount} Kč × ${travelerCount} os. × ${formatDays(days)}`,
       }
-    case 'perPiece': {
-      const pieces = effectiveLuggagePieces(input)
-      return {
-        amount: pricing.amount * pieces,
-        detail: `${pricing.amount} Kč × ${pieces} ${pieces === 1 ? 'zavazadlo' : pieces <= 4 ? 'zavazadla' : 'zavazadel'}`,
-      }
-    }
     case 'tripPricePercent': {
       const tripPrice = input.trip!.price
       const amount = Math.max(pricing.minPremium, Math.round(tripPrice * pricing.rate))
@@ -340,6 +355,15 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
     })
   }
 
+  const includedPieces = includedLuggagePieces(input.plan, input.travelers)
+  lines.push({
+    id: 'included-luggage',
+    kind: 'included',
+    label: 'Zavazadla',
+    detail: `${formatPieces(includedPieces)} v ceně, limit ${formatCzk(plan.luggageLimit)} na kufr`,
+    amount: 0,
+  })
+
   let addonsTotal = 0
   for (const addonId of ADDON_ORDER) {
     const addon = ADDONS[addonId]
@@ -358,6 +382,19 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
     const { amount, detail } = addonPrice(addon.pricing, input, days, travelerCount)
     addonsTotal += amount
     lines.push({ id: `addon-${addonId}`, kind: 'addon', label: addon.label, detail, amount })
+  }
+
+  const extraPieces = extraLuggagePieces(input)
+  if (extraPieces > 0) {
+    const amount = extraPieces * plan.extraLuggagePrice
+    addonsTotal += amount
+    lines.push({
+      id: 'addon-extraLuggage',
+      kind: 'addon',
+      label: 'Další kufr',
+      detail: `${formatCzk(plan.extraLuggagePrice)} × ${formatPieces(extraPieces)}`,
+      amount,
+    })
   }
 
   return {

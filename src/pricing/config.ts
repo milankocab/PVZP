@@ -5,7 +5,7 @@
 export type RegionId = 'europe' | 'world-no-us-ca' | 'world'
 export type TravelerType = 'adult' | 'child' | 'senior'
 export type PlanId = 'basic' | 'comfort' | 'premium'
-export type AddonId = 'winterSports' | 'cancellation' | 'luggage'
+export type AddonId = 'winterSports' | 'cancellation'
 
 export const MAX_TRIP_DAYS = 90
 export const MAX_TRAVELERS = 9
@@ -58,6 +58,10 @@ export interface Plan {
   medicalLimit: number
   /** Limit na jedno pojištěné zavazadlo včetně elektroniky v něm. */
   luggageLimit: number
+  /** Kolik zavazadel je v ceně. Jedno na celou smlouvu, nebo jedno na každého cestujícího. */
+  includedLuggage: 'perPolicy' | 'perTraveler'
+  /** Cena za každé zavazadlo navíc. Je o něco vyšší, než kolik zavazadlo stojí v balíčku. */
+  extraLuggagePrice: number
   /** Nejvyšší plnění za jeden kus elektroniky. Null znamená bez sublimitu (platí limit zavazadla). */
   electronicsItemLimit: number | null
   recommended: boolean
@@ -76,9 +80,11 @@ export const PLANS: Record<PlanId, Plan> = {
     multiplier: 1,
     medicalLimit: 2_000_000,
     luggageLimit: 15_000,
+    includedLuggage: 'perPolicy',
+    extraLuggagePrice: 150,
     electronicsItemLimit: null,
     recommended: false,
-    shortDescription: 'Léčebné výlohy a zavazadla do 15 tis. Kč',
+    shortDescription: 'Léčebné výlohy a jeden kufr do 15 tis. Kč',
     includedAddons: [],
   },
   comfort: {
@@ -87,6 +93,8 @@ export const PLANS: Record<PlanId, Plan> = {
     multiplier: 2.5,
     medicalLimit: 5_000_000,
     luggageLimit: 50_000,
+    includedLuggage: 'perTraveler',
+    extraLuggagePrice: 320,
     electronicsItemLimit: null,
     recommended: true,
     shortDescription: 'Pracovní notebook i telefon, odpovědnost a rozšířená asistence',
@@ -98,7 +106,11 @@ export const PLANS: Record<PlanId, Plan> = {
     multiplier: 3,
     medicalLimit: 10_000_000,
     luggageLimit: 80_000,
-    electronicsItemLimit: 50_000,
+    includedLuggage: 'perTraveler',
+    extraLuggagePrice: 380,
+    // Fiktivní interní data. Manažeři nahlašují elektroniku v průměru do 40 tis. Kč.
+    // TODO(Milan): v case study uvést jako předpoklad zadání, ne jako skutečná data.
+    electronicsItemLimit: 40_000,
     recommended: false,
     shortDescription: 'Nová cena elektroniky, storno bez lhůty a zpoždění letu',
     includedAddons: ['cancellation'],
@@ -119,8 +131,12 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
     },
   },
   {
+    label: 'Kufry v ceně',
+    values: { basic: '1 na smlouvu', comfort: '1 na osobu', premium: '1 na osobu' },
+  },
+  {
     label: 'Jeden kus elektroniky',
-    values: { basic: 'do limitu kufru', comfort: 'do limitu kufru', premium: 'nejvýše 50 tis. Kč' },
+    values: { basic: 'do limitu kufru', comfort: 'do limitu kufru', premium: 'nejvýše 40 tis. Kč' },
   },
   {
     label: 'Plnění za elektroniku',
@@ -195,8 +211,6 @@ export const CANCELLATION = {
 export type AddonPricing =
   /** Násobí se počtem cestujících a dní. */
   | { type: 'perPersonPerDay'; amount: number }
-  /** Násobí se počtem pojištěných zavazadel. */
-  | { type: 'perPiece'; amount: number; limitPerPiece: number }
   /** Podíl z ceny zájezdu, nejméně minPremium. */
   | { type: 'tripPricePercent'; rate: number; minPremium: number }
 
@@ -224,12 +238,12 @@ export const ADDONS: Record<AddonId, Addon> = {
       minPremium: CANCELLATION.minPremium,
     },
   },
-  luggage: {
-    id: 'luggage',
-    label: 'Zavazadla',
-    description: 'Krádež nebo poškození zavazadla až do 20 tis. Kč za každé pojištěné zavazadlo',
-    pricing: { type: 'perPiece', amount: 140, limitPerPiece: 20_000 },
-  },
 }
 
-export const ADDON_ORDER: AddonId[] = ['winterSports', 'cancellation', 'luggage']
+export const ADDON_ORDER: AddonId[] = ['winterSports', 'cancellation']
+
+// Zavazadla jsou v každém balíčku. Klient zadá, kolik kufrů veze.
+// Kufry nad počet v ceně se doplácí podle extraLuggagePrice zvoleného balíčku.
+export const LUGGAGE = {
+  maxPiecesPerTraveler: 2,
+}
