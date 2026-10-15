@@ -188,6 +188,7 @@ export function StepTrip({ state, update, errors }: StepProps) {
           name="tripPurpose"
           legend="Jedete pracovně?"
           columns={2}
+          plainIcons
           value={state.tripPurpose}
           onChange={(tripPurpose) => update({ tripPurpose })}
           options={[
@@ -228,7 +229,7 @@ export function StepTrip({ state, update, errors }: StepProps) {
           }
           icon={HeartPulse}
           tone="rose"
-          badge="dalších −10 %"
+          badge="−10 %"
         />
       </Section>
     </div>

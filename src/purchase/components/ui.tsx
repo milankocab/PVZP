@@ -132,6 +132,8 @@ interface ChoiceCardsProps<T extends string> {
   columns?: 1 | 2 | 3
   /** Ikona nad textem. Úzká dlaždice pak nemusí lámat popis po jednom slově. */
   stacked?: boolean
+  /** Malá ikona bez barevného pozadí. Pro krátké volby, kde by kolečko bralo místo textu. */
+  plainIcons?: boolean
 }
 
 const tileClass =
@@ -142,7 +144,7 @@ function TileCheck({ shape = 'circle' }: { shape?: 'circle' | 'square' }) {
   return (
     <span
       aria-hidden="true"
-      className={`absolute top-2 right-2 flex size-5 scale-50 items-center justify-center bg-brand-500 text-white opacity-0 transition duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-has-checked:scale-100 group-has-checked:opacity-100 ${
+      className={`absolute top-1.5 right-1.5 flex size-5 scale-50 items-center justify-center bg-brand-500 text-white opacity-0 transition duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-has-checked:scale-100 group-has-checked:opacity-100 ${
         shape === 'circle' ? 'rounded-full' : 'rounded-md'
       }`}
     >
@@ -163,6 +165,7 @@ export function ChoiceCards<T extends string>({
   hint,
   columns = 1,
   stacked = false,
+  plainIcons = false,
 }: ChoiceCardsProps<T>) {
   const grid = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' }[columns]
   return (
@@ -187,8 +190,17 @@ export function ChoiceCards<T extends string>({
               onChange={() => onChange(option.value)}
               className="sr-only"
             />
-            {option.icon && <IconBadge icon={option.icon} tone={option.tone} />}
-            <span className="min-w-0 pr-6">
+            {option.icon &&
+              (plainIcons ? (
+                <option.icon
+                  aria-hidden="true"
+                  className={`size-5 shrink-0 ${TONES[option.tone ?? 'brand'].split(' ')[1]}`}
+                  strokeWidth={2.2}
+                />
+              ) : (
+                <IconBadge icon={option.icon} tone={option.tone} />
+              ))}
+            <span className="min-w-0 pr-5">
               <span className="block leading-tight font-bold text-ink">{option.label}</span>
               {option.description && (
                 <span className="mt-0.5 block text-sm leading-snug text-slate-600">
