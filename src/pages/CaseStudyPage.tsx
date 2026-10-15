@@ -6,8 +6,11 @@ import { SampleSizeCalculator } from '../casestudy/SampleSizeCalculator'
 import { COVERAGE_ROWS, PLAN_ORDER, PLANS, REGIONS, formatCzk } from '../pricing'
 
 const SECTIONS = [
-  { id: 'problem', title: 'Problém' },
-  { id: 'varianty', title: 'Varianty a hypotézy' },
+  { id: 'cil', title: 'Cíl' },
+  { id: 'manazer', title: 'Jak poznám manažera' },
+  { id: 'balicky', title: 'Balíčky a ceny' },
+  { id: 'hypotezy', title: 'Hypotézy' },
+  { id: 'varianty', title: 'Varianty A a B' },
   { id: 'experiment', title: 'Návrh experimentu' },
   { id: 'mereni', title: 'Měření' },
   { id: 'realny-provoz', title: 'Jak bych test provedl v reálném provozu' },
@@ -34,7 +37,7 @@ function Section({ id, children }: { id: SectionId; children: ReactNode }) {
         tabIndex={-1}
         className="scroll-mt-4 text-2xl font-bold text-slate-900"
       >
-        {index + 2}. {SECTIONS[index].title}
+        {index + 1}. {SECTIONS[index].title}
       </h2>
       <div className="mt-4 space-y-4 text-slate-800">{children}</div>
     </section>
@@ -95,7 +98,7 @@ const EVENTS: [string, string][] = [
 export function CaseStudyPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
-      {/* 1. Úvod */}
+      {/* Úvod */}
       <header>
         <p className="font-semibold text-brand-700">Case study · testování</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
@@ -140,60 +143,51 @@ export function CaseStudyPage() {
                 onClick={() => goToSection(section.id)}
                 className="min-h-11 text-left text-brand-700 underline underline-offset-4"
               >
-                {index + 2}. {section.title}
+                {index + 1}. {section.title}
               </button>
             </li>
           ))}
         </ol>
       </nav>
 
-      {/* 2. Problém */}
-      <Section id="problem">
+      {/* 1. Cíl */}
+      <Section id="cil">
         <p>
-          Předpokládám, že si lidé cestovní pojištění kupují krátce před cestou. Pro většinu z nich
-          je to povinnost navíc, ne nákup, na který se těší. Každý krok, kterému nerozumí, je důvod
-          odejít.
+          Firma chce dvě věci. Zvýšit průměrnou hodnotu objednávky (AOV) a získat víc manažerů. Dnes
+          se nejvíc prodává nejlevnější balíček. Manažerů mezi klienty přibývá a firma chce, aby
+          jich bylo ještě víc.
         </p>
-        <H3>Kde podle mě lidé odpadají</H3>
-        <p>Jsou to moje hypotézy, ne fakta o trhu. Ověřit je má měření odpadu po krocích.</p>
+        <p>
+          Předpokládám, že 78&nbsp;% návštěv funnelu přichází z telefonu a vzniká na něm 70&nbsp;%
+          smluv. Konverze na telefonu je 9&nbsp;%, na desktopu 13,5&nbsp;%. Návrh proto začíná u
+          mobilu.
+        </p>
+      </Section>
+
+      {/* 2. Manažer */}
+      <Section id="manazer">
+        <p>Manažera poznám podle dvou signálů.</p>
         <Bullets>
+          <li>Klient v prvním kroku odpoví na otázku „Jedete pracovně?“ ano.</li>
           <li>
-            <strong>Výběr balíčku.</strong> Limity v milionech korun se špatně srovnávají. Kdo
-            nerozumí rozdílu, vezme nejlevnější balíček, nebo odejde. Proto jsou na kartách nahoře
-            konkrétní přínosy a podrobné srovnání je rozbalovací.
-          </li>
-          <li>
-            <strong>Cena, která překvapí na konci.</strong> Proto je cena vidět v liště od chvíle,
-            kdy je vyplněná cesta.
-          </li>
-          <li>
-            <strong>Údaje za všechny cestující.</strong> Na malé obrazovce je to nejdelší krok.
-            Proto je až čtvrtý. Klient už ví, co kupuje a za kolik.
-          </li>
-          <li>
-            <strong>Platba kartou na telefonu.</strong> Opisování čísla karty je pracné. Proto
-            nabízím Apple Pay a Google Pay.
+            Návštěva přišla z kampaně na manažery, třeba z LinkedInu. Odkaz má UTM parametr{' '}
+            <code className="rounded bg-slate-100 px-1">utm_audience=manazer</code>.
           </li>
         </Bullets>
+        <p>
+          U takhle rozpoznaných manažerů vidím vyšší hodnotu nahlášené elektroniky. Proto mají vyšší
+          balíčky vyšší limit na elektroniku a kufr pro každého cestujícího.
+        </p>
+        <p>
+          Otázka je nepovinná, segment proto nebude úplný. Do měření posílám i zdroj segmentu.
+          Výsledky z kampaně a z otázky tak porovnám zvlášť. Segmenty určuji před startem testu. Kdo
+          je hledá až v datech, nějaký „vítězný“ najde vždycky. Je to ale náhoda, ne efekt.
+        </p>
+      </Section>
 
-        <H3>Obchodní cíl</H3>
-        <p>
-          Dnes se nejvíc prodává nejnižší tarif. Firma chce zvýšit AOV. Navrhl jsem proto tři
-          balíčky. Doporučený je Komfort.
-        </p>
-        <p>
-          Předpokládáme, že data smyšlené firmy ukazují růst segmentu manažerů. Podíl smluv, u
-          kterých klient při škodě nahlásil elektroniku nad 30&nbsp;000&nbsp;Kč, vzrostl za rok z
-          12&nbsp;% na 18&nbsp;%. Drahá pracovní elektronika je nejlepší dostupný signál, že jde o
-          manažera. Proto jsem přidal limit na zavazadla a elektroniku. Je to pro manažery důvod
-          zvolit vyšší balíček.
-        </p>
-        <p>
-          Předpokládáme také, že 78&nbsp;% návštěv funnelu přichází z telefonu a vzniká na něm
-          70&nbsp;% smluv. Konverze na telefonu je 9&nbsp;%, na desktopu 13,5&nbsp;%. Návrh proto
-          začíná u mobilu.
-        </p>
-
+      {/* 3. Balíčky */}
+      <Section id="balicky">
+        <p>Navrhl jsem tři balíčky. Doporučený je Komfort.</p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[32rem] text-left text-sm">
             <caption className="pb-2 text-left font-semibold text-slate-900">
@@ -238,17 +232,38 @@ export function CaseStudyPage() {
           </table>
         </div>
         <p>
-          Komfort je o 50&nbsp;% dražší než Základ, limity ale rostou několikanásobně. Prémium je o
-          dalších 20&nbsp;% dražší. Vyšší balíček tak působí jako výhodná volba. Velký cenový skok
-          by naopak držel lidi u Základu, a to je dnešní problém.
+          Základ je pro lidi, kteří hledají nejnižší cenu. Má jeden kufr na celou smlouvu. Kdo chce
+          kufr pro každého cestujícího, zaplatí v Základu 80 až 90&nbsp;% ceny Komfortu. Rozdíl je
+          malý, a tak se mu víc vyplatí Komfort.
+        </p>
+        <p>
+          Komfort je o 50&nbsp;% dražší než Základ. Prémium je o dalších 20&nbsp;% dražší než
+          Komfort. Limity přitom rostou několikanásobně. Základ tak zůstává levný a vyšší balíčky
+          působí jako výhodná volba.
         </p>
       </Section>
 
-      {/* 3. Varianty a hypotézy */}
+      {/* 4. Hypotézy */}
+      <Section id="hypotezy">
+        <H3>Hypotéza 1, ověří ji A/B test</H3>
+        <Quote>
+          Pokud klient uvidí doporučený Komfort jako výchozí volbu, vzroste AOV. Konverze přitom
+          relativně neklesne o víc než 5&nbsp;%. Většina lidí výchozí volbu nemění.
+        </Quote>
+
+        <H3>Hypotéza 2, A/B test ji neověří</H3>
+        <Quote>Pokud mají balíčky přínosy pro manažery, vzroste podíl manažerů mezi klienty.</Quote>
+        <p>
+          Přínosy pro manažery mají obě varianty, A/B test proto nemá s čím srovnávat. Podíl smluv
+          od manažerů porovnám se stejným obdobím loni. Tím odfiltruji vliv sezóny.
+        </p>
+      </Section>
+
+      {/* 5. Varianty */}
       <Section id="varianty">
         <p>
-          Obě varianty mají stejný postup v 6 krocích. Liší se jen v kroku 2, výběru balíčku.
-          Komfort má v obou štítek „Doporučujeme“.
+          Hypotézu 1 ověřuji na kroku 2, výběru balíčku. Ostatních 5 kroků je v obou variantách
+          stejných. Komfort má v obou štítek „Doporučujeme“.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <figure className="rounded-xl bg-slate-50 p-4">
@@ -272,182 +287,93 @@ export function CaseStudyPage() {
 
         <H3>Proč měním dvě věci najednou</H3>
         <p>
-          Testuji celý způsob výběru balíčku, ne jeden prvek. Karty vedle sebe s jednou kartou
-          uprostřed působí, jako by služba už byla vybraná. Předvolba Komfortu k tomuto zobrazení
-          patří. Bez ní by klient viděl kartu uprostřed, ale nebyla by vybraná.
+          Karta uprostřed posuvníku působí, jako by byla už vybraná. Předvolba Komfortu k tomuto
+          zobrazení patří. Test proto neřekne, jestli rozdíl způsobilo zobrazení, nebo předvolba.
+          Když B vyhraje, rozdělím to testem 2.
         </p>
         <p>
-          Opřel jsem se o neformální rozhovory se 6 lidmi z mého okolí. Ukázal jsem jim obě verze a
-          zeptal se, kterou by chtěli používat. 5 z 6 zvolilo verzi s předvybraným balíčkem. Vzorek
-          je malý a nejde o reprezentativní výzkum. Rozhovory beru jako signál, že má smysl test
-          spustit, ne jako důkaz.
-        </p>
-        <p>
-          Cena za to je, že test neřekne, jestli rozdíl způsobilo zobrazení, nebo předvolba. Když B
-          vyhraje, rozdělím to dalším testem, viz plán testů.
-        </p>
-
-        <H3>Hypotéza 1, ověřuje ji A/B test</H3>
-        <Quote>
-          Pokud budou balíčky vedle sebe a Komfort předvybraný, zvýší se průměrná hodnota objednávky
-          (AOV), aniž by konverze z funnel_start na purchase_simulated relativně klesla o víc než
-          5&nbsp;%, protože většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než
-          odpovídá jeho přínosu.
-        </Quote>
-
-        <H3>Hypotéza 2, A/B test ji neověří</H3>
-        <Quote>
-          Pokud přidáme do balíčků přínosy pro manažery, vzroste podíl manažerů mezi klienty.
-        </Quote>
-        <p>
-          Přínosy pro manažery dostanou obě varianty. A/B test proto nemá s čím srovnávat. Hypotézu
-          2 ověřím srovnáním před spuštěním a po něm. Sleduji podíl smluv od manažerů a dlouhodobě
-          podíl smluv se škodou na elektronice nad 30&nbsp;000&nbsp;Kč, dnes 18&nbsp;%.
-        </p>
-        <p>
-          Srovnání před a po ovlivní sezóna a kampaně. Proto srovnávám se stejným obdobím loni.
-          Silnější by byla malá kontrolní skupina bez přínosů pro manažery. U pojištění by to ale
-          znamenalo prodávat dvě verze podmínek.
-        </p>
-
-        <H3>Jak poznám manažery</H3>
-        <Bullets>
-          <li>
-            Návštěva přišla z kampaně na manažery. Odkaz má parametr{' '}
-            <code className="rounded bg-slate-100 px-1">utm_audience=manazer</code>.
-          </li>
-          <li>Klient v prvním kroku odpověděl na otázku „Jedete pracovně?“ ano.</li>
-        </Bullets>
-        <p>
-          Otázka je nepovinná, takže segment nikdy nebude úplný. Do měření posílám i zdroj segmentu,
-          abych výsledky z kampaně a z otázky mohl porovnat zvlášť.
-        </p>
-
-        <H3>Proč segmenty určuji předem</H3>
-        <p>
-          Výsledek vyhodnotím pro všechny návštěvníky a zvlášť pro manažery a ostatní. Segmenty jsem
-          určil před startem testu. Kdo je hledá až v datech, vždycky nějaký „vítězný“ najde. Je to
-          ale náhoda, ne efekt.
+          Obě verze jsem ukázal 6 lidem z okolí. 5 z nich zvolilo verzi s předvybraným balíčkem.
+          Není to výzkum, jen signál, že má test smysl.
         </p>
       </Section>
 
-      {/* 4. Návrh experimentu */}
+      {/* 6. Návrh experimentu */}
       <Section id="experiment">
-        <H3>Primární metrika AOV</H3>
-        <p>Hlavní obchodní cíl je zvýšit průměrnou hodnotu objednávky. Proto rozhoduje AOV.</p>
-
-        <H3>Ochranné metriky</H3>
+        <H3>Metriky</H3>
         <Bullets>
           <li>
-            Konverze z <code className="rounded bg-slate-100 px-1">funnel_start</code> na{' '}
-            <code className="rounded bg-slate-100 px-1">purchase_simulated</code> nesmí relativně
-            klesnout o víc než 5&nbsp;%.
+            <strong>Primární je AOV.</strong> Je to hlavní obchodní cíl.
           </li>
-          <li>Tržba na návštěvu nesmí klesnout.</li>
+          <li>
+            <strong>Ochranné.</strong> Konverze z{' '}
+            <code className="rounded bg-slate-100 px-1">funnel_start</code> na{' '}
+            <code className="rounded bg-slate-100 px-1">purchase_simulated</code> nesmí relativně
+            klesnout o víc než 5&nbsp;%. Tržba na návštěvu nesmí klesnout. Bez nich by AOV mohlo
+            vyrůst jen proto, že nakoupí méně lidí.
+          </li>
+          <li>
+            <strong>Sekundární.</strong> Odpad po krocích, odpad při platbě, podíl balíčků a čas do
+            dokončení.
+          </li>
         </Bullets>
-        <p>
-          Bez těchto pojistek by AOV mohlo vyrůst jen proto, že nakoupí méně lidí, ale dražší
-          balíčky. Firma by pak vydělala méně.
-        </p>
 
         <H3>Proč hranice 5&nbsp;%</H3>
         <p>
-          Předpokládáme, že data smyšlené firmy ukazují konverzi 10&nbsp;%, týdenní kolísání
-          konverze zhruba 3&nbsp;% relativně a 20&nbsp;000 návštěv funnelu týdně. Podle simulace
-          nového cenového modelu čekám růst AOV o 10&nbsp;%.
+          Předpokládám konverzi 10&nbsp;%, týdenní kolísání konverze 3&nbsp;% relativně a
+          20&nbsp;000 návštěv funnelu týdně. Čekám růst AOV o 10&nbsp;%. Tržba by se pak vyrovnala
+          až při poklesu konverze o 9,1&nbsp;%. Hranice 5&nbsp;% nechává rezervu a je nad běžným
+          kolísáním. Pokles o 5&nbsp;% odhalím za 6 týdnů. Pokles o 2&nbsp;% by trval 35 týdnů.
         </p>
-        <Bullets>
-          <li>
-            <strong>Tržba nesmí klesnout.</strong> Při růstu AOV o 10&nbsp;% se tržba vyrovná při
-            poklesu konverze o 9,1&nbsp;%. Hranice 5&nbsp;% nechává rezervu. I v nejhorším povoleném
-            případě vzroste tržba na návštěvu o 4,5&nbsp;%.
-          </li>
-          <li>
-            <strong>Hranice musí být nad běžným kolísáním.</strong> Konverze kolísá o 3&nbsp;% i bez
-            změny. Hranice 2&nbsp;% by byla pod tímto šumem a test by končil falešnými poplachy.
-          </li>
-          <li>
-            <strong>Test musí jít změřit v rozumné době.</strong> Pokles o 5&nbsp;% odhalím zhruba
-            za 55&nbsp;000 návštěv na variantu, tedy za 6 týdnů. Pokles o 2&nbsp;% by potřeboval
-            350&nbsp;000 návštěv na variantu, tedy 35 týdnů.
-          </li>
-        </Bullets>
-
-        <H3>Sekundární metriky</H3>
-        <Bullets>
-          <li>Tržba celkem a počet zaplacených objednávek.</li>
-          <li>Odpad po krocích. Kde odchází nejvíc lidí.</li>
-          <li>Odpad při platbě, tedy rozdíl mezi výběrem způsobu platby a zaplacením.</li>
-          <li>Čas do dokončení.</li>
-          <li>Podíl jednotlivých balíčků.</li>
-        </Bullets>
 
         <H3>Délka testu a kalkulačka vzorku</H3>
         <p>
-          Délku testu určuje metrika, která potřebuje víc dat. Při výchozích hodnotách stačí na AOV
-          asi 7&nbsp;500 návštěv na variantu. Ochranná konverze jich ale potřebuje 55&nbsp;000. Test
-          proto poběží 6 týdnů. Zkuste si čísla změnit.
+          Délku určuje metrika, která potřebuje víc dat. Na AOV stačí asi 7&nbsp;500 návštěv na
+          variantu. Ochranná konverze jich potřebuje 55&nbsp;000. Test proto poběží 6 týdnů. Zkuste
+          si čísla změnit.
         </p>
         <SampleSizeCalculator />
 
-        <H3>Kdy test ukončit a jak rozhodnout</H3>
+        <H3>Jak rozhodnu</H3>
         <Bullets>
           <li>
-            Test ukončím, až obě varianty dosáhnou vypočteného vzorku. Vítěze v průběhu nevyhlašuji,
-            i když jedna varianta zrovna vede.
+            Test běží, dokud obě varianty nemají vypočtený vzorek. Vítěze v průběhu nevyhlašuji.
           </li>
           <li>
-            Dřív ho zastavím jen ve dvou případech. Konverze nebo tržba na návštěvu spadne pod
-            ochrannou hranici. Nebo návštěvy nejsou rozdělené zhruba 50 na 50, což znamená chybu v
-            přidělování.
+            Dřív ho zastavím, jen když metrika spadne pod ochrannou hranici, nebo návštěvy nejsou
+            rozdělené zhruba 50 na 50.
           </li>
           <li>
-            Varianta B vyhraje, když AOV vzroste statisticky významně a ochranné metriky drží. Pak
-            ji nasadím všem a kód varianty A smažu.
+            B vyhraje, když AOV vzroste statisticky významně a ochranné metriky drží. Jinak zůstává
+            A.
           </li>
-          <li>Když rozdíl není významný, nechám variantu A a připravím další test.</li>
         </Bullets>
-        <p>
-          Jak data vyhodnotím v praxi, popisuji v sekci 6. Podrobný postup s GA4, exportem do
-          BigQuery a výpočtem významnosti je v README.
-        </p>
 
         <H3>Plán testů</H3>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            <strong>Test 1.</strong> Balíčky pod sebou bez předvolby proti balíčkům vedle sebe s
-            předvybraným Komfortem. Nabídka vyššího balíčku je v obou zapnutá.
+            <strong>Test 1.</strong> Varianta A proti variantě B.
           </li>
           <li>
             <strong>Test 2.</strong> Když vyhraje B, karty vedle sebe s předvolbou proti kartám
-            vedle sebe bez předvolby. Tím zjistím, kolik dělá samotná předvolba.
+            vedle sebe bez předvolby. Zjistím, kolik dělá samotná předvolba.
           </li>
           <li>
-            <strong>Test 3.</strong> Na vítězné variantě nabídka vyššího balíčku zapnutá proti
-            vypnuté. V prototypu ji vypnete parametrem{' '}
+            <strong>Test 3.</strong> Nabídka vyššího balíčku v dalších krocích. Obě varianty ji teď
+            mají zapnutou. V testu 3 ji porovnám proti vypnuté. V prototypu ji vypnete parametrem{' '}
             <Link to="/sjednani?upsell=0" className="text-brand-700 underline underline-offset-4">
               ?upsell=0
             </Link>
             .
           </li>
-          <li>
-            <strong>Další kandidáti.</strong> Pořadí balíčků a postup s méně kroky, ten by byl test
-            na konverzi.
-          </li>
         </ol>
-        <p>
-          Obvykle v jednom testu měním jen jednu věc, jinak nepoznám, co výsledek způsobilo. Test 1
-          je výjimka a důvod popisuji v sekci Varianty a hypotézy.
-        </p>
       </Section>
 
-      {/* 5. Měření */}
+      {/* 7. Měření */}
       <Section id="mereni">
         <p>
           Všechny eventy jdou přes jednu funkci{' '}
           <code className="rounded bg-slate-100 px-1">track(event, params)</code>. Ke každému přidá
-          variantu, segment a jeho zdroj, účel cesty, oblast, počet cestujících, balíček a přesnou
-          cenu. Cenu nezaokrouhluji, protože AOV je primární metrika.
+          variantu, segment a jeho zdroj, balíček a přesnou cenu.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -476,18 +402,10 @@ export function CaseStudyPage() {
             </tbody>
           </table>
         </div>
-
-        <H3>Co záměrně neměřím</H3>
         <p>
-          Jména, e-maily, telefony, data narození ani jiný obsah formulářů. K rozhodnutí o testu je
-          nepotřebuji a jejich sběr by byl zbytečné riziko. Měřicí vrstva má seznam povolených
-          parametrů a všechno ostatní zahodí. U chyb ve formuláři posílám jen název pole, nikdy
-          hodnotu. Automatický test projde celé sjednání s ukázkovými daty a ověří, že se do měření
-          nic z nich nedostalo.
-        </p>
-        <p>
-          Na nasazeném prototypu měřím i kliky, a to bez cookies. Prvky s osobními údaji jsou z
-          měření kliků vyřazené. Data z vašeho prohlížeče uvidíte na stránce{' '}
+          Osobní údaje neměřím. Měřicí vrstva pustí jen povolené parametry. U chyb ve formuláři
+          posílám jen název pole. Automatický test ověřuje, že se do měření nic osobního nedostane.
+          Kliky měřím bez cookies. Data z vašeho prohlížeče uvidíte na stránce{' '}
           <Link to="/vysledky" className="text-brand-700 underline underline-offset-4">
             Měření
           </Link>
@@ -495,44 +413,37 @@ export function CaseStudyPage() {
         </p>
       </Section>
 
-      {/* 6. Reálný provoz */}
+      {/* 8. Reálný provoz */}
       <Section id="realny-provoz">
-        <p>
-          A/B test v tomto projektu neprobíhá. S lidmi jsem mluvil jen neformálně, 6 rozhovorů v
-          okolí popisuji v sekci 3. Takhle bych postupoval na skutečném provozu.
-        </p>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
             <strong>Plán testu.</strong> Před startem sepíšu hypotézu, metriky, segmenty, vzorek a
-            délku testu.
+            délku.
           </li>
           <li>
-            <strong>Google Analytics 4.</strong> Sbírá eventy z aplikace. Zaregistruji v něm vlastní
-            dimenze varianta, segment, zdroj segmentu, účel cesty a balíček. Propojím ho s BigQuery.
+            <strong>Google Analytics 4.</strong> Sbírá eventy. Variantu, segment a balíček v něm
+            nastavím jako vlastní dimenze.
           </li>
           <li>
             <strong>BigQuery.</strong> Uchovává každou objednávku zvlášť. Bez toho nejde spočítat
-            významnost AOV, protože GA4 ukazuje jen průměry.
+            významnost AOV.
           </li>
           <li>
-            <strong>Looker Studio (dříve Google Data Studio).</strong> Dashboard s konverzí a tržbou
-            po variantách a týdnech a s rozdělením návštěv mezi varianty.
+            <strong>Looker Studio.</strong> Dashboard s konverzí, tržbou a rozdělením návštěv po
+            týdnech.
           </li>
           <li>
-            <strong>Spuštění.</strong> Nejdřív krátce na malý podíl návštěv, abych ověřil měření.
-            Pak 50 na 50.
+            <strong>Spuštění.</strong> Nejdřív na malý podíl návštěv, abych ověřil měření. Pak 50 na
+            50.
           </li>
           <li>
-            <strong>Týdenní kontrola.</strong> Jen rozdělení návštěv a ochranné metriky.
-          </li>
-          <li>
-            <strong>Vyhodnocení.</strong> Po dosažení vzorku spočítám významnost v GrowthBooku nad
-            daty z BigQuery a rozhodnu podle pravidel ze sekce 4.
+            <strong>Vyhodnocení.</strong> Po dosažení vzorku spočítám významnost v GrowthBooku a
+            rozhodnu podle pravidel z návrhu experimentu.
           </li>
         </ol>
       </Section>
 
-      {/* 7. AI */}
+      {/* 9. AI */}
       <Section id="ai">
         <Placeholder>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-800">
@@ -544,14 +455,14 @@ export function CaseStudyPage() {
         </Placeholder>
       </Section>
 
-      {/* 8. 90 dní */}
+      {/* 10. 90 dní */}
       <Section id="plan-90-dni">
         <Placeholder>
           <p className="mt-2 text-slate-800">Napíšu sám.</p>
         </Placeholder>
       </Section>
 
-      {/* 9. Omezení */}
+      {/* 11. Omezení */}
       <Section id="omezeni">
         <Bullets>
           <li>Ceny, limity a podmínky jsou smyšlené. Firma i její data jsou smyšlené.</li>

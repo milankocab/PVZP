@@ -18,14 +18,17 @@ describe('CaseStudyPage', () => {
       '/sjednani?v=b',
     )
     for (const title of [
-      '2. Problém',
-      '3. Varianty a hypotézy',
-      '4. Návrh experimentu',
-      '5. Měření',
-      '6. Jak bych test provedl v reálném provozu',
-      '7. Jak jsem pracoval s AI',
-      '8. Plán prvních 90 dní',
-      '9. Omezení prototypu',
+      '1. Cíl',
+      '2. Jak poznám manažera',
+      '3. Balíčky a ceny',
+      '4. Hypotézy',
+      '5. Varianty A a B',
+      '6. Návrh experimentu',
+      '7. Měření',
+      '8. Jak bych test provedl v reálném provozu',
+      '9. Jak jsem pracoval s AI',
+      '10. Plán prvních 90 dní',
+      '11. Omezení prototypu',
     ]) {
       expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
     }
