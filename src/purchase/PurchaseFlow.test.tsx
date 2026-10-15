@@ -94,7 +94,8 @@ describe('PurchaseFlow', () => {
     expect(purchase?.params.price).toBeGreaterThan(0)
 
     // Do měření se nesmí dostat žádné osobní údaje z formuláře.
-    const serialized = JSON.stringify(events)
+    // Kontroluji jen params. Časová značka ts může náhodně obsahovat 777 nebo 1984.
+    const serialized = JSON.stringify(events.map((event) => event.params))
     expect(serialized).not.toMatch(/Ukázkov|example\.com|777|1986|1984/)
   })
 
