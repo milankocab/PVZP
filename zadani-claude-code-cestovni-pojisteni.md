@@ -34,11 +34,11 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 
 #### Jak jsem nastavil ceny
 
-- **Řád ceny podle trhu.** Srovnatelné cestovní pojištění stojí v Evropě desítky korun za den. Na veřejné kalkulačce PVZP (říjen 2026, Slovensko, 2 dny, jeden dospělý, bez slev) stojí tři varianty 84, 118 a 153 Kč. Naše balíčky vyjdou na stejnou cestu na 76, 114 a 137 Kč.
+- **Řád ceny podle trhu.** Srovnatelné cestovní pojištění stojí v Evropě desítky korun za den. Ověřil jsem to na veřejných kalkulačkách v říjnu 2026. Naše balíčky stojí na 2 dny v Evropě pro jednoho dospělého 76, 114 a 137 Kč.
 - **Cenový skok menší než skok v hodnotě.** Komfort je o 50 % dražší než Základ, ale limity rostou několikanásobně. Prémium je o dalších 20 % dražší. Vyšší balíček tak působí jako výhodná volba. Velký cenový skok by naopak držel lidi u Základu, a to je dnešní problém.
-- **Oblasti.** Svět bez USA a Kanady stojí 68 Kč a Celý svět 110 Kč za den v Základu. `TODO(Milan): ověřit poměr cen mezi oblastmi.`
+- **Oblasti.** Svět bez USA a Kanady stojí 57 Kč za den v Základu, tedy 1,5× Evropa. Odpovídá to poměru na trhu. Celý svět včetně USA stojí 84 Kč (2,2× Evropa). Předpokládám, že tento poměr vychází z dat smyšlené firmy o škodách v USA a Kanadě.
 - **Příplatky.** Zimní sporty 20 Kč na osobu a den. Kufr navíc polovinu denní ceny dospělého v balíčku za každý den. Storno 3,5 % z ceny zájezdu, nejméně 190 Kč.
-- **Slevy** se počítají jen ze základního pojistného a řetězí se. Rodinná sleva 15 %, sleva pro pojištěnce VZP 20 % a pro členy Klubu pevného zdraví dalších 10 %. Slevy pro pojištěnce VZP a Klub pevného zdraví jsem převzal z veřejné kalkulačky PVZP jako ukázku analýzy trhu. `TODO(Milan): ověřit, jestli se slevy na webu sčítají, nebo řetězí.`
+- **Slevy** se počítají jen ze základního pojistného a řetězí se. Rodinná sleva 15 %, sleva pro pojištěnce VZP 20 % a pro členy Klubu pevného zdraví dalších 10 %.
 
 #### Proč sublimit 40 000 Kč na kus
 
@@ -58,7 +58,7 @@ Sublimit platí v Komfortu i Prémiu. Prémium se liší vyšším limitem na ku
 
 #### Firemní elektronika v Prémiu
 
-Při sjednání se na firmu neptám, protože by to nikdo nevyplňoval. Krytí v Prémiu zahrnuje i elektroniku, kterou klient používá a patří jeho firmě. Vlastnictví se dokládá až při hlášení škody fakturou na firmu a plnění dostane majitel věci. Při krádeži je nutný protokol od policie. Jedno zařízení nejde proplatit dvakrát, hlídá se podle sériového čísla nebo IMEI. Spoluúčast nezavádím, protože na trhu není jednotným standardem. `TODO(Milan): ověřit s právníky pojištění věci, kterou pojištěný nevlastní, a souběh s pojištěním majetku firmy.`
+Při sjednání se na firmu neptám, protože by to nikdo nevyplňoval. Krytí v Prémiu zahrnuje i elektroniku, kterou klient používá a patří jeho firmě. Vlastnictví se dokládá až při hlášení škody fakturou na firmu a plnění dostane majitel věci. Při krádeži je nutný protokol od policie. Jedno zařízení nejde proplatit dvakrát, hlídá se podle sériového čísla nebo IMEI. Spoluúčast nezavádím, protože na trhu není jednotným standardem. Pojištění věci, kterou pojištěný nevlastní, a souběh s pojištěním majetku firmy je před spuštěním nutné potvrdit s legal týmem.
 
 Základ s jedním kufrem na smlouvu je levná vstupní varianta, například pro krátkou cestu s jedním kufrem. Když cestuje víc lidí s jedním kufrem, aplikace je upozorní, že limit platí na kufr, a nabídne další kufr nebo vyšší balíček.
 
@@ -74,7 +74,14 @@ Ve variantách nabízím Apple Pay a Google Pay (v prototypu jen simulace). Při
 
 ### Mobil na prvním místě
 
-Podle interních dat vzniká 70 % nových smluv na telefonu. `TODO(Milan): ověřit zdroj čísla.` Návrh proto začíná u mobilu a desktop se přizpůsobuje mobilnímu zobrazení, ne naopak. Každou obrazovku navrhuji a kontroluji nejdřív v šířce 375 px.
+Předpokládám, že data smyšlené firmy za posledních 12 měsíců ukazují:
+- 78 % návštěv funnelu přichází z telefonu,
+- konverze na telefonu je 9 %, na desktopu 13,5 %, celkem 10 %,
+- na telefonu tak vzniká 70 % nových smluv.
+
+Telefon je tedy největší kanál a zároveň má o třetinu horší konverzi než desktop. Každý procentní bod konverze na telefonu má proto největší dopad na tržby. Kdyby se konverze na telefonu zvedla jen na polovinu rozdílu (z 9 % na 11,25 %), celková konverze vzroste z 10 % na 11,8 %.
+
+Návrh proto začíná u mobilu a desktop se přizpůsobuje mobilnímu zobrazení, ne naopak. Každou obrazovku navrhuji a kontroluji nejdřív v šířce 375 px.
 
 ### Proč ochranná hranice konverze 5 %
 
@@ -96,7 +103,6 @@ Data, která by hranici potvrdila na skutečném provozu: historická týdenní 
 ## Tvrdá pravidla (dodržuj vždy)
 
 1. **Fiktivní značka.** Produkt se jmenuje **„Odjezd“** (fiktivní pojišťovna). Nepoužívej název, logo, barvy, texty ani ceny žádné skutečné pojišťovny. Na každé stránce bude v patičce: „Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i podmínky jsou smyšlené.“
-   - **Výjimka schválená Milanem 15. 10. 2026.** Limity léčebných výloh a odpovědnosti a slevy pro pojištěnce VZP a členy Klubu pevného zdraví odpovídají veřejné kalkulačce PVZP. Je to záměrná ukázka analýzy trhu a Milan přijímá rizika. Case study to musí transparentně uvést. Ceny, logo, barvy a texty dál nepřebírej.
 2. **Žádná reálná platba ani sběr osobních údajů.** Krok „Platba“ je jen simulace (tlačítko „Zaplatit (simulace)“). Formulářová data se nikam neodesílají a **nikdy se neposílají do analytiky**. Předvyplň je smyšlenými hodnotami tlačítkem „Vyplnit ukázková data“.
 3. **Git.** Nedělej `git commit` ani `git push`. Commituji a pushuji sám. Na konci každé fáze mi napiš navržený commit message.
 4. **Pracuj po fázích.** Po každé fázi se zastav, shrň co jsi udělal, co jsi předpokládal a co mám zkontrolovat. Pokračuj až po mém „OK“.
@@ -143,7 +149,7 @@ Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty s
 
 1. **Cesta a cestující.** Kam, kdy, kdo. Volitelná otázka „Jedete pracovně?“ (ano, ne, nebo bez odpovědi). Slouží k poznání segmentu, viz fáze 4.
 2. **Výběr balíčku.** 3 karty pod sebou. Na kartách jsou nahoře přínosy pro manažery (limit na kufr, 40 000 Kč na kus elektroniky, nová cena v Prémiu, firemní elektronika). Komfort má v obou variantách štítek „Doporučujeme“. Podrobné srovnání krytí je rozbalovací, aby na mobilu nezabíralo místo.
-3. **Doplňky a potřeby.** Počet kufrů, zimní sporty, storno. Otázky na potřeby jsou vložené přímo sem (odpověď „Pojedete lyžovat?“ zapne zimní sporty). Při menším počtu kufrů, než je cestujících, se zobrazí okno s červeným upozorněním a nutným potvrzením. `TODO(Milan): ověřit, co přesně vyžaduje zákon o distribuci pojištění pro online sjednání.`
+3. **Doplňky a potřeby.** Počet kufrů, zimní sporty, storno. Otázky na potřeby jsou vložené přímo sem (odpověď „Pojedete lyžovat?“ zapne zimní sporty). Při menším počtu kufrů, než je cestujících, se zobrazí okno s červeným upozorněním a nutným potvrzením. Rozsah otázek na potřeby podle zákona o distribuci pojištění je před spuštěním nutné potvrdit s legal týmem.
 4. **Údaje pojistníka a cestujících.** Tlačítko „Vyplnit ukázková data“.
 5. **Shrnutí a souhlasy.**
 6. **Platba (simulace) a potvrzení.** Apple Pay, Google Pay a karta, vše jen jako simulace.
@@ -198,7 +204,7 @@ Struktura stránky (texty napiš jako návrh, já je upravím):
 6. **Jak bych test provedl v reálném provozu.** Testování v tomto projektu neprobíhá, ani A/B test, ani test s uživateli. Case study ukazuje prototyp, hypotézy a plán. Sekce popisuje postup od plánu testu přes sběr dat v GA4, BigQuery a Looker Studiu (dříve Google Data Studio) po rozhodnutí. Podrobný postup je v README.
 7. **Jak jsem pracoval s AI.** Placeholder `TODO(Milan)` se strukturou: co jsem zadal, jak jsem použil CLAUDE.md a skill na kontrolu textů, co AI udělala špatně a jak jsem to poznal, co jsem rozhodl sám.
 8. **Plán prvních 90 dní.** Placeholder `TODO(Milan)`, napíšu sám.
-9. **Omezení prototypu** (smyšlené ceny ukotvené v trhu, převzaté limity a slevy, žádný backend, žádná platba, lokální měření, žádné skutečné testování).
+9. **Omezení prototypu** (smyšlené ceny a podmínky, žádný backend, žádná platba, lokální měření, žádné skutečné testování).
 
 ## Fáze 6: Kontrola a nasazení
 

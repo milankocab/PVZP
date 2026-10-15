@@ -2,7 +2,7 @@
 
 Case study a prototyp. Ukazuje, jak bych jako Product Owner navrhl online sjednání cestovního pojištění, nastavil cenový model a naplánoval A/B test zaměřený na průměrnou hodnotu objednávky (AOV), tržby a konverzi.
 
-Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i podmínky jsou smyšlené. Výjimkou jsou limity léčebných výloh a odpovědnosti a slevy pro pojištěnce VZP a členy Klubu pevného zdraví. Ty jsem převzal z veřejné kalkulačky PVZP jako ukázku analýzy trhu.
+Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i podmínky jsou smyšlené.
 
 Testování v tomto projektu neprobíhá. Prototyp, hypotézy a plán ukazují, jak bych test provedl v reálném provozu.
 

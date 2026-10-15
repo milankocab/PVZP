@@ -291,7 +291,7 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
   return issues
 }
 
-function formatPieces(pieces: number): string {
+export function formatPieces(pieces: number): string {
   if (pieces === 1) return '1 kufr'
   if (pieces >= 2 && pieces <= 4) return `${pieces} kufry`
   return `${pieces} kufrů`

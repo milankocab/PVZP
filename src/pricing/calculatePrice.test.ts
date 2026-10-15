@@ -12,7 +12,7 @@ import {
 } from './calculatePrice'
 
 // Očekávané částky vycházejí z config.ts. Denní sazba dospělého v Základu: Evropa 38 Kč,
-// Svět bez USA a Kanady 68 Kč, Celý svět 110 Kč. Základ 1×, Komfort 1,5×, Prémium 1,8×.
+// Svět bez USA a Kanady 57 Kč, Celý svět 84 Kč. Základ 1×, Komfort 1,5×, Prémium 1,8×.
 // Dítě 0,5×, senior 2×. Slevy ze základního pojistného, řetězí se: rodinná 15 %,
 // pojištěnci VZP 20 %, Klub pevného zdraví dalších 10 %. Zimní sporty 20 Kč/os./den.
 // Storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě, v Prémiu v ceně).
@@ -120,8 +120,8 @@ describe('calculatePrice', () => {
         travelers: { adult: 0, child: 0, senior: 1 },
       }),
     )
-    // 110 × 1,8 × 2 × 7 = 2772.
-    expect(price.total).toBe(2772)
+    // 84 × 1,8 × 2 × 7 = 2116,8.
+    expect(price.total).toBe(2117)
   })
 
   it('dítě v Základu', () => {

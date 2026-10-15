@@ -1,8 +1,18 @@
+import { useSearchParams } from 'react-router-dom'
+import { PurchaseFlow } from '../purchase/PurchaseFlow'
+
 export function PurchasePage() {
+  const [params] = useSearchParams()
+  // Přidělení varianty A/B testu doplní fáze 3. Zatím se chová jako varianta A (bez předvolby),
+  // parametr ?v=b předvybere Komfort.
+  const preselectedPlan = params.get('v') === 'b' ? 'comfort' : null
+  const upsellEnabled = params.get('upsell') === '1'
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-bold">Sjednání</h1>
-      <p className="mt-4">Připravuji v další fázi.</p>
-    </div>
+    <PurchaseFlow
+      key={`${preselectedPlan}-${upsellEnabled}`}
+      preselectedPlan={preselectedPlan}
+      upsellEnabled={upsellEnabled}
+    />
   )
 }

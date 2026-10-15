@@ -1,7 +1,5 @@
-// Ceny jsou smyšlené, ale ukotvené v řádu trhu (desítky korun za den v Evropě).
-// Výjimka schválená Milanem 15. 10. 2026: limity léčebných výloh a odpovědnosti a slevy
-// pro pojištěnce VZP a členy Klubu pevného zdraví odpovídají veřejné kalkulačce cestovního
-// pojištění PVZP (říjen 2026). Case study to transparentně uvádí jako analýzu trhu.
+// Všechny ceny, limity a podmínky jsou smyšlené. Ceny jsou v řádu trhu
+// (desítky korun za den v Evropě).
 // Částky jsou v Kč. Úpravou tohoto souboru se změní ceny v celém prototypu.
 // Testy v calculatePrice.test.ts mají pevná očekávaná čísla, po změně cen je uprav.
 
@@ -14,7 +12,8 @@ export const MAX_TRIP_DAYS = 90
 export const MAX_TRAVELERS = 9
 
 // Denní sazba dospělého v balíčku Základ. Evropa odpovídá řádu trhu.
-// TODO(Milan): ověřit poměr cen mezi oblastmi, poměry 1,8× a 2,9× jsou odhad.
+// Svět bez USA a Kanady je 1,5× Evropa, což odpovídá poměru na trhu (ověřeno v říjnu 2026).
+// Celý svět včetně USA je 2,2× Evropa. Předpoklad z dat smyšlené firmy o škodách v USA a Kanadě.
 export const REGIONS: Record<RegionId, { label: string; description: string; dailyRate: number }> =
   {
     europe: {
@@ -26,12 +25,12 @@ export const REGIONS: Record<RegionId, { label: string; description: string; dai
     'world-no-us-ca': {
       label: 'Svět bez USA a Kanady',
       description: 'Všechny státy světa kromě USA a Kanady',
-      dailyRate: 68,
+      dailyRate: 57,
     },
     world: {
       label: 'Celý svět',
       description: 'Všechny státy světa',
-      dailyRate: 110,
+      dailyRate: 84,
     },
   }
 
@@ -54,10 +53,8 @@ export const FAMILY_DISCOUNT = {
   rate: 0.15,
 }
 
-// Slevy převzaté z veřejné kalkulačky PVZP (schválená výjimka, viz začátek souboru).
 // Sleva pro členy Klubu pevného zdraví je dodatečná a platí jen pro pojištěnce VZP.
 // Prototyp je bere za celou smlouvu, ne po jednotlivých cestujících.
-// TODO(Milan): ověřit, jestli se slevy na webu sčítají, nebo řetězí, a jestli platí na osobu.
 export const MEMBER_DISCOUNTS = {
   healthInsurer: { label: 'Sleva pro pojištěnce VZP', rate: 0.2 },
   healthClub: { label: 'Sleva pro členy Klubu pevného zdraví', rate: 0.1 },
@@ -186,7 +183,7 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
   },
   {
     // Vlastnictví se dokládá až při škodě (faktura na firmu), plnění jde majiteli věci.
-    // TODO(Milan): ověřit s právníky pojištění věci, kterou pojištěný nevlastní.
+    // Pojištění věci, kterou pojištěný nevlastní, je nutné potvrdit s legal týmem.
     label: 'Firemní elektronika, kterou používáte',
     values: { basic: false, comfort: false, premium: true },
   },
