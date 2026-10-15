@@ -31,6 +31,7 @@ describe('DebugBar', () => {
 
   it('přepne variantu přes ?v a zachová ostatní parametry', () => {
     renderPage('/sjednani?v=a&upsell=1')
+    fireEvent.click(screen.getByRole('button', { name: /Režim ukázky/ }))
     const abGroup = screen.getByRole('group', { name: 'A/B test' })
     expect(within(abGroup).getByText('A · bez předvolby')).toBeInTheDocument()
     fireEvent.click(within(abGroup).getByRole('button', { name: 'Přepnout na B' }))
@@ -40,12 +41,21 @@ describe('DebugBar', () => {
 
   it('vynutí segment manažera a vynucení zase zruší', () => {
     renderPage('/sjednani?v=b')
+    fireEvent.click(screen.getByRole('button', { name: /Režim ukázky/ }))
     const segmentGroup = screen.getByRole('group', { name: 'Segment' })
     fireEvent.click(within(segmentGroup).getByRole('button', { name: 'Vynutit manažera' }))
     expect(screen.getByTestId('search').textContent).toBe('?v=b&segment=manazer')
     expect(within(segmentGroup).getByText('Manažer, vynucený')).toBeInTheDocument()
     fireEvent.click(within(segmentGroup).getByRole('button', { name: 'Zrušit vynucení' }))
     expect(screen.getByTestId('search').textContent).toBe('?v=b')
+  })
+
+  it('je ve výchozím stavu sbalená', () => {
+    renderPage('/sjednani?v=b')
+    expect(screen.getByRole('button', { name: /Režim ukázky/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
   })
 
   it('vysvětlení ukáže po kliknutí na i', () => {
