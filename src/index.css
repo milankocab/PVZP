@@ -115,6 +115,25 @@ body {
     outline: 3px solid var(--color-brand-800);
     outline-offset: 2px;
   }
+
+  /* Tailwind v4 dává tlačítkům výchozí kurzor. Všechno klikací má ukazovátko, zakázané „nelze“. */
+  button,
+  [role='button'],
+  summary,
+  select,
+  label:has(input[type='checkbox'], input[type='radio']),
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='date'],
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /*
