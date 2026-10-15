@@ -1,59 +1,29 @@
 import { ChevronDown, FlaskConical, Info } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import type { Variant } from '../analytics/experiment'
-
-const VARIANT_LABELS: Record<Variant, string> = {
-  a: 'A · bez předvolby',
-  b: 'B · předvybraný Komfort',
-}
+import { Tip } from './Tip'
 
 function InfoTip({ label, children }: { label: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false)
-  const id = useId()
   return (
-    <span
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+    <Tip
+      label={label}
+      content={children}
+      className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-amber-100 active:scale-90"
     >
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen((value) => !value)}
-        onBlur={() => setOpen(false)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') setOpen(false)
-        }}
-        className="flex size-11 items-center justify-center rounded-full text-slate-700 transition hover:bg-amber-100 active:scale-90"
-      >
-        <Info aria-hidden="true" className="size-5" />
-      </button>
-      <span
-        id={id}
-        role="tooltip"
-        hidden={!open}
-        className="absolute top-full right-0 z-40 w-72 max-w-[calc(100vw-2rem)] animate-fade rounded-xl bg-ink p-3 text-sm font-normal text-white shadow-xl"
-      >
-        {children}
-      </span>
-    </span>
+      <Info aria-hidden="true" className="size-5" />
+    </Tip>
   )
 }
 
+/** Jeden řádek lišty. Na 375 px se vejde stav, tlačítko i vysvětlivka vedle sebe. */
 function Row({
   label,
-  badge,
-  badgeClass,
   value,
   action,
   tip,
 }: {
   label: string
-  badge: string
-  badgeClass: string
-  value: string
+  value: ReactNode
   action: ReactNode
   tip: ReactNode
 }) {
@@ -61,16 +31,11 @@ function Row({
     <div
       role="group"
       aria-label={label}
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-white/80 py-1 pr-1 pl-3 text-sm ring-1 ring-amber-200"
+      className="flex items-center gap-2 rounded-xl bg-white/85 py-1 pr-0.5 pl-3 text-sm ring-1 ring-amber-200"
     >
-      <span className={`rounded-md px-2 py-0.5 text-xs font-bold tracking-wide ${badgeClass}`}>
-        {badge}
-      </span>
-      <span className="font-semibold text-slate-800">{value}</span>
-      <span className="ml-auto flex items-center">
-        {action}
-        {tip}
-      </span>
+      <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">{value}</span>
+      {action}
+      {tip}
     </div>
   )
 }
@@ -94,7 +59,7 @@ export function DebugBar({
   const panelId = useId()
   const next: Variant = variant === 'a' ? 'b' : 'a'
   const buttonClass =
-    'min-h-11 rounded-lg bg-ink px-3 font-semibold text-white transition hover:bg-brand-800 active:scale-95'
+    'min-h-11 shrink-0 rounded-lg bg-ink px-3 text-sm font-bold whitespace-nowrap text-white transition hover:bg-brand-800 active:scale-95'
 
   return (
     <div className="border-b-2 border-dashed border-amber-400 bg-amber-50 bg-[repeating-linear-gradient(135deg,transparent_0_12px,rgb(253_230_138/0.35)_12px_24px)]">
@@ -131,9 +96,7 @@ export function DebugBar({
             <div className="grid gap-2 pb-3 sm:grid-cols-2">
               <Row
                 label="A/B test"
-                badge="A/B"
-                badgeClass="bg-amber-400 text-slate-900"
-                value={VARIANT_LABELS[variant]}
+                value={`Varianta ${variant.toUpperCase()}`}
                 action={
                   <button
                     type="button"
@@ -145,16 +108,26 @@ export function DebugBar({
                 }
                 tip={
                   <InfoTip label="Co je přepínač variant">
-                    Ukáže obě varianty testu. Na ostrém webu by návštěvník dostal jednu variantu
-                    náhodně a zůstal by u ní. Přepnutí začne sjednání znovu.
+                    Ukáže obě varianty testu. Varianta A má balíčky pod sebou a žádný není vybraný.
+                    Varianta B má balíčky vedle sebe a vybraný Komfort. Na ostrém webu by návštěvník
+                    dostal jednu variantu náhodně a zůstal by u ní. Přepnutí začne sjednání znovu.
                   </InfoTip>
                 }
               />
               <Row
                 label="Segment"
-                badge="SEGMENT"
-                badgeClass="bg-violet-700 text-white"
-                value={segmentForced ? 'Manažer, vynucený' : 'Podle odpovědi a UTM'}
+                value={
+                  <>
+                    Segment{' '}
+                    <span
+                      className={`ml-1 rounded-md px-1.5 py-0.5 text-xs font-bold ${
+                        segmentForced ? 'bg-violet-700 text-white' : 'bg-slate-200 text-slate-800'
+                      }`}
+                    >
+                      {segmentForced ? 'manažer' : 'auto'}
+                    </span>
+                  </>
+                }
                 action={
                   <button
                     type="button"

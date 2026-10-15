@@ -33,9 +33,9 @@ describe('DebugBar', () => {
     renderPage('/sjednani?v=a&upsell=1')
     fireEvent.click(screen.getByRole('button', { name: /Režim ukázky/ }))
     const abGroup = screen.getByRole('group', { name: 'A/B test' })
-    expect(within(abGroup).getByText('A · bez předvolby')).toBeInTheDocument()
+    expect(within(abGroup).getByText('Varianta A')).toBeInTheDocument()
     fireEvent.click(within(abGroup).getByRole('button', { name: 'Přepnout na B' }))
-    expect(within(abGroup).getByText('B · předvybraný Komfort')).toBeInTheDocument()
+    expect(within(abGroup).getByText('Varianta B')).toBeInTheDocument()
     expect(screen.getByTestId('search').textContent).toBe('?v=b&upsell=1')
   })
 
@@ -45,7 +45,7 @@ describe('DebugBar', () => {
     const segmentGroup = screen.getByRole('group', { name: 'Segment' })
     fireEvent.click(within(segmentGroup).getByRole('button', { name: 'Vynutit manažera' }))
     expect(screen.getByTestId('search').textContent).toBe('?v=b&segment=manazer')
-    expect(within(segmentGroup).getByText('Manažer, vynucený')).toBeInTheDocument()
+    expect(within(segmentGroup).getByText('manažer')).toBeInTheDocument()
     fireEvent.click(within(segmentGroup).getByRole('button', { name: 'Zrušit vynucení' }))
     expect(screen.getByTestId('search').textContent).toBe('?v=b')
   })
@@ -60,10 +60,10 @@ describe('DebugBar', () => {
 
   it('vysvětlení ukáže po kliknutí na i', () => {
     renderPage('/sjednani?v=b')
-    const tooltip = screen.getAllByRole('tooltip', { hidden: true })[0]
-    expect(tooltip).not.toBeVisible()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Co je přepínač variant' }))
-    expect(tooltip).toBeVisible()
-    expect(tooltip).toHaveTextContent('Na ostrém webu by návštěvník dostal jednu variantu')
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Varianta A má balíčky pod sebou')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 })
