@@ -16,18 +16,24 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 
 - Dnes se nejvíc prodává nejnižší tarif.
 - Firma chce zvýšit AOV (průměrnou hodnotu objednávky).
-- Proto nastavujeme nový cenový model se třemi balíčky Basic, Comfort a Premium.
+- Proto nastavujeme nový cenový model se třemi balíčky Základ, Komfort a Prémium. Doporučený a ve variantě B předvybraný je Komfort.
 - Hlavní cílový segment jsou manažeři. Podle interních dat tento segment roste. `TODO(Milan): doplnit zdroj nebo číslo, případně formulovat jako předpoklad.`
 - Nový typ limitu je limit na zavazadla a elektroniku. Manažeři cestují s drahou technikou a limit je pro ně důvod zvolit vyšší balíček.
 
-| Parametr | Basic | Comfort | Premium |
+| Parametr | Základ | Komfort | Prémium |
 | --- | --- | --- | --- |
-| Limit zavazadel a elektroniky | 15 000 Kč | 50 000 Kč | 80 000 Kč |
-| Cenový odskok | základní cena | +150 % oproti Basic (velký skok) | +20 % oproti Comfort (malý skok) |
+| Limit zavazadel a elektroniky (na jeden kufr) | 15 000 Kč | 50 000 Kč | 80 000 Kč |
+| Limit na jeden kus elektroniky | do limitu kufru | do limitu kufru | 50 000 Kč |
+| Cenový odskok | základní cena | +150 % oproti Základu (velký skok) | +20 % oproti Komfortu (malý skok) |
 | Plnění za elektroniku | časová cena (odpočet stáří) | časová cena (odpočet stáří) | nová cena pro věci do 2 let stáří |
-| Výhody navíc | žádné | standardní asistence | storno bez lhůty, zpoždění letu, vyšší odpovědnost |
+| Asistence | lékařská nonstop | lékařská a rozšířená (ztráta dokladů, právní pomoc) | lékařská a rozšířená |
+| Výhody navíc | žádné | odpovědnost, úraz | storno v ceně bez lhůty od koupě, zpoždění letu, vyšší odpovědnost |
 
-Velký skok mezi Basic a Comfort a malý skok mezi Comfort a Premium má posunout volbu od Basic k vyšším balíčkům.
+Velký skok mezi Základem a Komfortem a malý skok mezi Komfortem a Prémiem má posunout volbu od Základu k vyšším balíčkům.
+
+### Mobil na prvním místě
+
+Podle interních dat vzniká 70 % nových smluv na telefonu. `TODO(Milan): ověřit zdroj čísla.` Návrh proto začíná u mobilu a desktop se přizpůsobuje mobilnímu zobrazení, ne naopak. Každou obrazovku navrhuji a kontroluji nejdřív v šířce 375 px.
 
 ## Tvrdá pravidla (dodržuj vždy)
 
@@ -66,7 +72,7 @@ Vše smyšlené a v jednom konfiguračním souboru `src/pricing/config.ts`, aby 
 - **Oblast:** Evropa, Svět bez USA a Kanady, Celý svět (různá denní sazba za osobu)
 - **Délka cesty:** počet dní z data odjezdu a návratu, maximum 90 dní
 - **Cestující:** dospělý, dítě do 18 let (zlevněné), senior 70+ (dražší). Rodinná sleva při 2 dospělých a alespoň 1 dítěti.
-- **Varianta krytí:** Základ, Standard (doporučená), Komfort. Každá má limit léčebných výloh a seznam krytí pro srovnávací tabulku.
+- **Balíček:** Základ, Komfort (doporučený), Prémium. Viz sekce Obchodní kontext. Každá má limit léčebných výloh a seznam krytí pro srovnávací tabulku.
 - **Připojištění:** zimní a rizikové sporty, storno zájezdu, zavazadla
 - Funkce `calculatePrice(input): PriceBreakdown` vrací celkovou cenu i rozpad po položkách.
 - Unit testy pro hraniční případy (1 den, 90 dní, rodinná sleva, senior, kombinace připojištění, neplatná data).
@@ -88,7 +94,7 @@ Odpovídá běžnému postupu na trhu. Cena se ukáže až ve 3. kroku.
 Hypotéza: když uživatel vidí cenu hned a musí udělat méně rozhodnutí, víc lidí sjednání dokončí.
 - Kroky 1 a 2 sloučené do jedné obrazovky (kam, kdy, kdo).
 - Od prvního vyplnění je vidět **přilepená lišta s průběžnou cenou** (na mobilu dole).
-- Varianta Standard je předvybraná, připojištění se nabízí podle odpovědí (lyžování → nabídni zimní sporty), ne jako dlouhý seznam.
+- Balíček Komfort je předvybraný, připojištění se nabízí podle odpovědí (lyžování → nabídni zimní sporty), ne jako dlouhý seznam.
 - Požadavky a potřeby jsou vložené přímo do výběru (otázka „Pojedete lyžovat?“ zároveň nastaví připojištění).
 - Výsledek je o 2 kroky kratší než varianta A.
 

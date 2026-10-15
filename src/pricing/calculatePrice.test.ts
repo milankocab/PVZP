@@ -11,8 +11,8 @@ import {
   type PriceInput,
 } from './calculatePrice'
 
-// Očekávané částky vycházejí z config.ts: Evropa 24 Kč, Svět bez USA a Kanady 42 Kč,
-// Celý svět 68 Kč za osobu a den. Základ 0,75×, Standard 1×, Komfort 1,6× (storno v ceně).
+// Očekávané částky vycházejí z config.ts: Evropa 18 Kč, Svět bez USA a Kanady 32 Kč,
+// Celý svět 52 Kč za osobu a den. Základ 1×, Komfort 2,5×, Prémium 3× (storno v ceně).
 // Dítě 0,5×, senior 2×. Rodinná sleva 15 %. Zimní sporty 18 Kč/os./den,
 // storno 3,5 % z ceny zájezdu (nejméně 190 Kč, sjednat do 7 dní od koupě), zavazadla 140 Kč/kus.
 
@@ -24,7 +24,7 @@ function input(overrides: Partial<PriceInput> = {}): PriceInput {
     departure: '2026-11-01',
     return: '2026-11-01',
     travelers: { adult: 1, child: 0, senior: 0 },
-    plan: 'standard',
+    plan: 'comfort',
     addons: [],
     today: TODAY,
     ...overrides,
@@ -61,13 +61,13 @@ describe('calculatePrice', () => {
   it('jednodenní cesta jednoho dospělého', () => {
     const price = calculatePrice(input())
     expect(price.days).toBe(1)
-    expect(price.total).toBe(24)
+    expect(price.total).toBe(45)
   })
 
   it('cesta na maximálních 90 dní je platná', () => {
     const price = calculatePrice(input({ return: '2027-01-29' }))
     expect(price.days).toBe(90)
-    expect(price.total).toBe(2160)
+    expect(price.total).toBe(4050)
   })
 
   it('cesta na 91 dní je neplatná', () => {
@@ -79,11 +79,11 @@ describe('calculatePrice', () => {
     const price = calculatePrice(
       input({ return: '2026-11-10', travelers: { adult: 2, child: 1, senior: 0 } }),
     )
-    // Dospělí 24 × 2 × 10 = 480, dítě 24 × 0,5 × 10 = 120, sleva 15 % z 600 = 90.
-    expect(price.basePremium).toBe(600)
-    expect(price.discount).toBe(90)
-    expect(price.total).toBe(510)
-    expect(price.lines.find((line) => line.kind === 'discount')?.amount).toBe(-90)
+    // Dospělí 45 × 2 × 10 = 900, dítě 45 × 0,5 × 10 = 225, sleva 15 % z 1125 = 168,75.
+    expect(price.basePremium).toBe(1125)
+    expect(price.discount).toBe(169)
+    expect(price.total).toBe(956)
+    expect(price.lines.find((line) => line.kind === 'discount')?.amount).toBe(-169)
   })
 
   it('rodinná sleva se nepočítá z připojištění', () => {
@@ -94,22 +94,22 @@ describe('calculatePrice', () => {
         addons: ['winterSports'],
       }),
     )
-    // Základ 600, sleva 90, zimní sporty 18 × 3 × 10 = 540.
+    // Základ 1125, sleva 169, zimní sporty 18 × 3 × 10 = 540.
     expect(price.addonsTotal).toBe(540)
-    expect(price.total).toBe(1050)
+    expect(price.total).toBe(1496)
   })
 
   it('senior platí dvojnásobek a cena se zaokrouhlí na koruny', () => {
     const price = calculatePrice(
       input({
         region: 'world',
-        plan: 'comfort',
+        plan: 'premium',
         return: '2026-11-07',
         travelers: { adult: 0, child: 0, senior: 1 },
       }),
     )
-    // 68 × 1,6 × 2 × 7 = 1523,2.
-    expect(price.total).toBe(1523)
+    // 52 × 3 × 2 × 7 = 2184.
+    expect(price.total).toBe(2184)
   })
 
   it('kombinace všech připojištění', () => {
@@ -121,11 +121,11 @@ describe('calculatePrice', () => {
         trip: { price: 30_000, bookedOn: '2026-10-10' },
       }),
     )
-    // Základ 24 × 2 × 7 = 336, zimní sporty 18 × 2 × 7 = 252,
+    // Komfort 45 × 2 × 7 = 630, zimní sporty 18 × 2 × 7 = 252,
     // storno 3,5 % z 30 000 = 1050, zavazadla 140 × 2 = 280.
-    expect(price.basePremium).toBe(336)
+    expect(price.basePremium).toBe(630)
     expect(price.addonsTotal).toBe(1582)
-    expect(price.total).toBe(1918)
+    expect(price.total).toBe(2212)
     expect(price.lines.map((line) => line.id)).toEqual([
       'base-adult',
       'addon-winterSports',
@@ -136,7 +136,7 @@ describe('calculatePrice', () => {
 
   it('duplicitní připojištění se počítá jednou', () => {
     const price = calculatePrice(input({ addons: ['luggage', 'luggage'] }))
-    expect(price.total).toBe(24 + 140)
+    expect(price.total).toBe(45 + 140)
   })
 
   it('dítě v základní variantě', () => {
@@ -147,22 +147,22 @@ describe('calculatePrice', () => {
         travelers: { adult: 0, child: 1, senior: 0 },
       }),
     )
-    // 24 × 0,75 × 0,5 × 3 = 27.
+    // 18 × 1 × 0,5 × 3 = 27.
     expect(price.total).toBe(27)
   })
 
-  it('varianty jsou seřazené podle ceny', () => {
-    const totals = (['basic', 'standard', 'comfort'] as const).map(
+  it('Komfort je o 150 % dražší než Základ, Prémium o 20 % dražší než Komfort', () => {
+    const totals = (['basic', 'comfort', 'premium'] as const).map(
       (plan) => calculatePrice(input({ plan, return: '2026-11-10' })).total,
     )
-    expect(totals).toEqual([180, 240, 384])
+    expect(totals).toEqual([180, 450, 540])
   })
 
   it('součet položek rozpadu odpovídá celkové ceně', () => {
     const price = calculatePrice(
       input({
         region: 'world-no-us-ca',
-        plan: 'comfort',
+        plan: 'premium',
         return: '2026-11-23',
         travelers: { adult: 1, child: 2, senior: 1 },
         addons: ['winterSports', 'luggage'],
@@ -225,10 +225,10 @@ describe('storno zájezdu', () => {
     ).toEqual([])
   })
 
-  it('v Komfortu je storno v ceně a nepotřebuje údaje o zájezdu', () => {
-    const price = calculatePrice(input({ plan: 'comfort', addons: ['cancellation'] }))
-    // 24 × 1,6 = 38,4.
-    expect(price.total).toBe(38)
+  it('v Prémiu je storno v ceně bez lhůty a nepotřebuje údaje o zájezdu', () => {
+    const price = calculatePrice(input({ plan: 'premium', addons: ['cancellation'] }))
+    // 18 × 3 = 54.
+    expect(price.total).toBe(54)
     expect(price.addonsTotal).toBe(0)
     expect(price.lines.find((line) => line.id === 'included-cancellation')?.amount).toBe(0)
   })
@@ -319,7 +319,7 @@ describe('validatePriceInput', () => {
 describe('tryCalculatePrice', () => {
   it('vrátí null místo výjimky pro neúplný vstup', () => {
     expect(tryCalculatePrice(input({ return: '' }))).toBeNull()
-    expect(tryCalculatePrice(input())?.total).toBe(24)
+    expect(tryCalculatePrice(input())?.total).toBe(45)
   })
 })
 

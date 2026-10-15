@@ -4,7 +4,7 @@
 
 export type RegionId = 'europe' | 'world-no-us-ca' | 'world'
 export type TravelerType = 'adult' | 'child' | 'senior'
-export type PlanId = 'basic' | 'standard' | 'comfort'
+export type PlanId = 'basic' | 'comfort' | 'premium'
 export type AddonId = 'winterSports' | 'cancellation' | 'luggage'
 
 export const MAX_TRIP_DAYS = 90
@@ -16,17 +16,17 @@ export const REGIONS: Record<RegionId, { label: string; description: string; dai
       label: 'Evropa',
       description:
         'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
-      dailyRate: 24,
+      dailyRate: 18,
     },
     'world-no-us-ca': {
       label: 'Svět bez USA a Kanady',
       description: 'Všechny státy světa kromě USA a Kanady',
-      dailyRate: 42,
+      dailyRate: 32,
     },
     world: {
       label: 'Celý svět',
       description: 'Všechny státy světa',
-      dailyRate: 68,
+      dailyRate: 52,
     },
   }
 
@@ -53,83 +53,122 @@ export type CoverageValue = string | boolean
 export interface Plan {
   id: PlanId
   label: string
+  /** Násobek denní sazby. Komfort je o 150 % dražší než Základ, Prémium o 20 % dražší než Komfort. */
   multiplier: number
   medicalLimit: number
+  /** Limit na jedno pojištěné zavazadlo včetně elektroniky v něm. */
+  luggageLimit: number
+  /** Nejvyšší plnění za jeden kus elektroniky. Null znamená bez sublimitu (platí limit zavazadla). */
+  electronicsItemLimit: number | null
   recommended: boolean
   shortDescription: string
-  /** Připojištění, která jsou v ceně varianty a neúčtují se zvlášť. */
+  /** Připojištění, která jsou v ceně balíčku a neúčtují se zvlášť. */
   includedAddons: AddonId[]
 }
 
+// Obchodní cíl: dnes se nejvíc prodává nejnižší tarif a firma chce zvýšit průměrnou hodnotu
+// objednávky. Velký cenový skok mezi Základem a Komfortem a malý mezi Komfortem a Prémiem
+// má posunout volbu k vyšším balíčkům. Hlavní cílový segment jsou manažeři.
 export const PLANS: Record<PlanId, Plan> = {
   basic: {
     id: 'basic',
     label: 'Základ',
-    multiplier: 0.75,
-    medicalLimit: 2_000_000,
-    recommended: false,
-    shortDescription: 'Léčebné výlohy a asistence',
-    includedAddons: [],
-  },
-  standard: {
-    id: 'standard',
-    label: 'Standard',
     multiplier: 1,
-    medicalLimit: 5_000_000,
-    recommended: true,
-    shortDescription: 'Navíc odpovědnost a úraz',
+    medicalLimit: 2_000_000,
+    luggageLimit: 15_000,
+    electronicsItemLimit: null,
+    recommended: false,
+    shortDescription: 'Léčebné výlohy a zavazadla do 15 tis. Kč',
     includedAddons: [],
   },
   comfort: {
     id: 'comfort',
     label: 'Komfort',
-    multiplier: 1.6,
+    multiplier: 2.5,
+    medicalLimit: 5_000_000,
+    luggageLimit: 50_000,
+    electronicsItemLimit: null,
+    recommended: true,
+    shortDescription: 'Pracovní notebook i telefon, odpovědnost a rozšířená asistence',
+    includedAddons: [],
+  },
+  premium: {
+    id: 'premium',
+    label: 'Prémium',
+    multiplier: 3,
     medicalLimit: 10_000_000,
+    luggageLimit: 80_000,
+    electronicsItemLimit: 50_000,
     recommended: false,
-    shortDescription: 'Vyšší limity a storno zájezdu v ceně',
+    shortDescription: 'Nová cena elektroniky, storno bez lhůty a zpoždění letu',
     includedAddons: ['cancellation'],
   },
 }
 
-export const PLAN_ORDER: PlanId[] = ['basic', 'standard', 'comfort']
+export const PLAN_ORDER: PlanId[] = ['basic', 'comfort', 'premium']
 
 // Řádky srovnávací tabulky krytí. Hodnota true znamená „kryto“, false „nekryto“.
+// Pořadí řádků je záměrné. Na mobilu se nahoře ukazuje to, čím se balíčky liší nejvíc.
 export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValue> }[] = [
   {
-    label: 'Léčebné výlohy',
-    values: { basic: '2 mil. Kč', standard: '5 mil. Kč', comfort: '10 mil. Kč' },
+    label: 'Zavazadla a elektronika',
+    values: {
+      basic: '15 tis. Kč na kufr',
+      comfort: '50 tis. Kč na kufr',
+      premium: '80 tis. Kč na kufr',
+    },
   },
   {
-    label: 'Asistenční služba nonstop',
-    values: { basic: true, standard: true, comfort: true },
+    label: 'Jeden kus elektroniky',
+    values: { basic: 'do limitu kufru', comfort: 'do limitu kufru', premium: 'nejvýše 50 tis. Kč' },
+  },
+  {
+    label: 'Plnění za elektroniku',
+    values: {
+      basic: 'Časová cena',
+      comfort: 'Časová cena',
+      premium: 'Nová cena u věcí do 2 let',
+    },
+  },
+  {
+    label: 'Léčebné výlohy',
+    values: { basic: '2 mil. Kč', comfort: '5 mil. Kč', premium: '10 mil. Kč' },
+  },
+  {
+    label: 'Lékařská asistence nonstop',
+    values: { basic: true, comfort: true, premium: true },
+  },
+  {
+    label: 'Rozšířená asistence (ztráta dokladů, právní pomoc)',
+    values: { basic: false, comfort: true, premium: true },
   },
   {
     label: 'Převoz zpět do ČR',
-    values: { basic: true, standard: true, comfort: true },
+    values: { basic: true, comfort: true, premium: true },
   },
   {
     label: 'Odpovědnost za škodu na zdraví',
-    values: { basic: false, standard: '1 mil. Kč', comfort: '3 mil. Kč' },
+    values: { basic: false, comfort: '1 mil. Kč', premium: '3 mil. Kč' },
   },
   {
     label: 'Odpovědnost za škodu na věci',
-    values: { basic: false, standard: '500 tis. Kč', comfort: '1 mil. Kč' },
+    values: { basic: false, comfort: '500 tis. Kč', premium: '1 mil. Kč' },
   },
   {
     label: 'Trvalé následky úrazu',
-    values: { basic: false, standard: '200 tis. Kč', comfort: '400 tis. Kč' },
+    values: { basic: false, comfort: '200 tis. Kč', premium: '400 tis. Kč' },
   },
   {
     label: 'Storno zájezdu',
     values: {
       basic: 'Jako připojištění',
-      standard: 'Jako připojištění',
-      comfort: '20 tis. Kč na osobu',
+      comfort: 'Jako připojištění',
+      premium: 'V ceně, bez lhůty od koupě',
     },
   },
   {
     label: 'Zpoždění letu nad 6 hodin',
-    values: { basic: false, standard: false, comfort: '3 tis. Kč' },
+    values: { basic: false, comfort: false, premium: '3 tis. Kč' },
   },
 ]
 
@@ -143,7 +182,7 @@ export const CANCELLATION = {
   minPremium: 190,
   /** Nejvyšší pojistitelná cena zájezdu na osobu u připojištění. */
   maxTripPricePerPerson: 60_000,
-  /** Limit storna, které je v ceně varianty Komfort. */
+  /** Limit storna, které je v ceně balíčku Prémium. V Prémiu neplatí lhůta od koupě zájezdu. */
   includedLimitPerPerson: 20_000,
   /** Podíl storno poplatku, který se vrátí při doloženém důvodu (nemoc, úraz a podobně). */
   documentedReasonShare: 0.8,

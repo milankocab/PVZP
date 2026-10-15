@@ -24,12 +24,13 @@ Prototyp online sjednání cestovního pojištění ve dvou variantách (A/B tes
 - Vite + React + TypeScript, Tailwind CSS v4, `HashRouter` (GitHub Pages).
 - `base` ve `vite.config.ts` je `/cestovni-pojisteni-prototyp/`.
 - Vitest pro testy, ESLint (včetně jsx-a11y), Prettier.
-- Mobile first, ovladatelné klávesnicí, kontrast WCAG AA.
+- **Mobil na prvním místě.** 70 % nových smluv vzniká na telefonu. Každou obrazovku navrhuj a kontroluj nejdřív v šířce 375 px. Desktop je rozšíření mobilní verze. Ovládací prvky aspoň 44 × 44 px, hlavní tlačítko v dosahu palce.
+- Ovladatelné klávesnicí, kontrast WCAG AA.
 - Žádný backend. `localStorage` vždy obalit `try/catch`.
 
 ## Struktura
 
-- `src/pricing/` cenový model. Všechny smyšlené ceny jsou v `src/pricing/config.ts`.
+- `src/pricing/` cenový model. Všechny smyšlené ceny jsou v `src/pricing/config.ts`. Balíčky Základ, Komfort (doporučený) a Prémium. Obchodní cíl je zvýšit AOV, cílový segment jsou manažeři (viz zadání).
 - `src/analytics/` A/B přidělení a měřicí vrstva `track(event, params)`.
 - `src/pages/` stránky `#/`, `#/sjednani`, `#/vysledky`.
 - `src/components/` sdílené komponenty obou variant.
