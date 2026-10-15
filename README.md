@@ -105,7 +105,7 @@ Do analytiky nikdy nejdou jména, e-maily, data narození ani jiný obsah formul
 
 Workflow je v `.github/workflows/deploy.yml`. Po pushi do `main` spustí lint, testy a build a nasadí složku `dist` na GitHub Pages. Jde ho spustit i ručně v záložce Actions (Run workflow).
 
-1. Repozitář se musí jmenovat `cestovni-pojisteni-prototyp`, protože na tento název je nastavený `base` ve `vite.config.ts`. Jiný název znamená změnit `base`.
+1. Název repozitáře není důležitý. `base` ve `vite.config.ts` je relativní (`./`) a routování běží přes hash, takže web funguje na jakékoli adrese.
 2. V Settings, Pages nastavím Source na GitHub Actions.
 3. V Settings, Secrets and variables, Actions, záložka Variables, založím repository variables. Všechny jsou volitelné.
 

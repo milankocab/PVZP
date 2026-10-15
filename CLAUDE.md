@@ -22,7 +22,7 @@ Prototyp online sjednání cestovního pojištění ve dvou variantách (A/B tes
 ## Technologie
 
 - Vite + React + TypeScript, Tailwind CSS v4, `HashRouter` (GitHub Pages).
-- `base` ve `vite.config.ts` je `/cestovni-pojisteni-prototyp/`.
+- `base` ve `vite.config.ts` je relativní `./`. Web běží na `https://milankocab.github.io/PVZP/`.
 - Vitest pro testy, ESLint (včetně jsx-a11y), Prettier.
 - **Mobil na prvním místě.** 70 % nových smluv vzniká na telefonu. Každou obrazovku navrhuj a kontroluj nejdřív v šířce 375 px. Desktop je rozšíření mobilní verze. Ovládací prvky aspoň 44 × 44 px, hlavní tlačítko v dosahu palce.
 - Ovladatelné klávesnicí, kontrast WCAG AA.

@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/cestovni-pojisteni-prototyp/',
+  // Relativní cesty. S HashRouterem web funguje pod jakýmkoli názvem repozitáře.
+  base: './',
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'jsdom',
