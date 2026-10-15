@@ -10,7 +10,8 @@ export function PurchasePage() {
   // Přidělení se vyhodnotí jednou za zobrazení stránky. Parametr ?v ho přepíše pro ukázku.
   const [assigned] = useState(() => resolveVariant(null))
   const variant = override === 'a' || override === 'b' ? override : assigned
-  const upsellEnabled = params.get('upsell') === '1'
+  // Nabídka vyššího balíčku je zapnutá ve výchozím stavu. Parametr ?upsell=0 ji vypne.
+  const upsellEnabled = params.get('upsell') !== '0'
   const segmentOverride = params.get('segment')
   const segmentForced = segmentOverride === 'manazer'
 

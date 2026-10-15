@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, Check, CircleAlert } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import {
   PLAN_ORDER,
@@ -14,6 +15,8 @@ import { resolveSegment, type Variant } from '../analytics/experiment'
 import { track, type EventName } from '../analytics/track'
 import { LuggageDialog } from './components/LuggageDialog'
 import { DesktopSummary, MobilePriceBar } from './components/PriceBar'
+import { ProgressRing } from './components/ProgressRing'
+import { UpsellNudge, type UpsellOffer } from './components/UpsellNudge'
 import {
   STEPS,
   createInitialState,
@@ -29,17 +32,29 @@ import { StepDetails } from './steps/StepDetails'
 import { StepExtras } from './steps/StepExtras'
 import { StepPayment } from './steps/StepPayment'
 import { StepPlan } from './steps/StepPlan'
-import { StepSummary, type UpsellOffer } from './steps/StepSummary'
+import { StepSummary } from './steps/StepSummary'
 import { StepTrip } from './steps/StepTrip'
 
+// Nadpis kroku je krátký. Sekce uvnitř kroku mají vlastní nadpisy, které ho neopakují.
 const STEP_TITLES: Record<StepId, string> = {
-  trip: 'Kam a kdy jedete',
+  trip: 'Vaše cesta',
   plan: 'Vyberte balíček',
-  extras: 'Doplňky a vaše potřeby',
-  details: 'Údaje pojistníka a cestujících',
-  summary: 'Shrnutí a souhlasy',
+  extras: 'Doplňky',
+  details: 'Vaše údaje',
+  summary: 'Shrnutí',
   payment: 'Platba',
 }
+
+/** Konfety kolem fajfky po zaplacení. Každá tečka letí jiným směrem. */
+const BURST = Array.from({ length: 12 }, (_, index) => {
+  const angle = (index / 12) * Math.PI * 2
+  const distance = 64 + (index % 3) * 14
+  return {
+    dx: `${Math.round(Math.cos(angle) * distance)}px`,
+    dy: `${Math.round(Math.sin(angle) * distance)}px`,
+    color: ['bg-accent-500', 'bg-brand-400', 'bg-amber-300', 'bg-violet-400'][index % 4],
+  }
+})
 
 function priceFor(state: FormState): PriceBreakdown | null {
   const input = toPriceInput(state)
@@ -88,11 +103,20 @@ export function PurchaseFlow({
   const [errors, setErrors] = useState<Errors>({})
   const [luggageDialogOpen, setLuggageDialogOpen] = useState(false)
   const [purchased, setPurchased] = useState<PriceBreakdown | null>(null)
+  // Po přijetí nabídka zmizí natrvalo, splnila účel. „Teď ne“ ji schová jen v daném kroku.
+  const [upsellAccepted, setUpsellAccepted] = useState(false)
+  const [upsellDismissed, setUpsellDismissed] = useState<StepId[]>([])
   const headingRef = useRef<HTMLHeadingElement>(null)
   const firstRender = useRef(true)
-  const tracked = useRef({ started: false, lastStep: -1, priceShown: false, upsellShown: false })
+  const tracked = useRef({
+    started: false,
+    lastStep: -1,
+    priceShown: false,
+    upsellSteps: [] as StepId[],
+  })
 
   const step = STEPS[stepIndex]
+  const nextStep = STEPS[stepIndex + 1] ?? null
   const price = priceFor(state)
   const basicInput = toBasePriceInput(state, 'basic')
   const fromPrice =
@@ -205,37 +229,69 @@ export function PurchaseFlow({
   }
 
   const upsell = ((): UpsellOffer | null => {
-    if (!upsellEnabled || !state.plan || state.plan === 'premium' || !price) return null
+    if (!upsellEnabled || upsellAccepted || !state.plan || state.plan === 'premium' || !price) {
+      return null
+    }
     const nextPlan = PLAN_ORDER[PLAN_ORDER.indexOf(state.plan) + 1]
     const nextPrice = priceFor({ ...state, plan: nextPlan, luggagePieces: null })
     if (!nextPrice) return null
-    return { plan: nextPlan, difference: nextPrice.total - price.total }
+    return { plan: nextPlan, from: state.plan, difference: nextPrice.total - price.total }
   })()
 
-  const upsellVisible = step.id === 'summary' && upsell !== null
+  // Nabídka je v každém kroku od výběru balíčku. V kroku Cesta ještě není co nabízet.
+  const upsellVisible = step.id !== 'trip' && upsell !== null && !upsellDismissed.includes(step.id)
   useEffect(() => {
-    if (!upsellVisible || tracked.current.upsellShown) return
-    tracked.current.upsellShown = true
-    trackEvent('upsell_shown')
+    if (!upsellVisible || tracked.current.upsellSteps.includes(step.id)) return
+    tracked.current.upsellSteps.push(step.id)
+    trackEvent('upsell_shown', { step_number: stepIndex + 1, step_name: step.id })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upsellVisible])
+  }, [upsellVisible, step.id])
 
   if (purchased) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-bold text-slate-900">
+      <div className="mx-auto max-w-xl px-4 py-10 text-center">
+        <div className="relative mx-auto size-24" aria-hidden="true">
+          {BURST.map((dot, index) => (
+            <span
+              key={index}
+              style={{ '--dx': dot.dx, '--dy': dot.dy } as CSSProperties}
+              className={`absolute top-1/2 left-1/2 -mt-1.5 -ml-1.5 size-3 animate-burst rounded-full ${dot.color}`}
+            />
+          ))}
+          <span className="absolute inset-0 flex animate-pop items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 shadow-[0_12px_32px_-8px_rgb(18_160_145/0.7)]">
+            <svg viewBox="0 0 24 24" className="size-12 text-white">
+              <path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="48"
+                className="animate-draw"
+              />
+            </svg>
+          </span>
+        </div>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="mt-8 animate-rise text-3xl font-extrabold tracking-tight text-ink"
+        >
           Hotovo. Pojištění je sjednané.
         </h1>
-        <p className="mt-3 text-slate-800">
+        <p className="mt-3 animate-rise text-slate-700 [animation-delay:80ms]">
           Tohle je simulace. Nic se nezaplatilo a žádná smlouva nevznikla.
         </p>
-        <p className="mt-6 text-lg">
-          Zaplaceno (simulace) <strong>{formatCzk(purchased.total)}</strong>
+        <p className="mx-auto mt-6 inline-flex animate-rise items-center gap-2 rounded-full bg-white px-5 py-2 text-lg shadow-sm [animation-delay:160ms]">
+          <Check aria-hidden="true" className="size-5 text-brand-600" strokeWidth={3} />
+          Zaplaceno (simulace){' '}
+          <strong className="tabular-nums">{formatCzk(purchased.total)}</strong>
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             to="/"
-            className="flex min-h-12 items-center justify-center rounded-lg bg-brand-700 px-5 font-semibold text-white"
+            className="flex min-h-12 items-center justify-center rounded-2xl bg-ink px-6 font-bold text-white transition hover:bg-brand-800 active:scale-[0.97]"
           >
             Zpět na case study
           </Link>
@@ -246,13 +302,15 @@ export function PurchaseFlow({
                 started: false,
                 lastStep: -1,
                 priceShown: false,
-                upsellShown: false,
+                upsellSteps: [] as StepId[],
               }
               setState(createInitialState(preselectedPlan))
               setStepIndex(0)
               setPurchased(null)
+              setUpsellAccepted(false)
+              setUpsellDismissed([])
             }}
-            className="min-h-12 rounded-lg border-2 border-brand-700 px-5 font-semibold text-brand-700"
+            className="min-h-12 rounded-2xl border-2 border-brand-600 bg-white px-6 font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.97]"
           >
             Sjednat znovu
           </button>
@@ -267,72 +325,77 @@ export function PurchaseFlow({
   const travelerCount = countTravelers(state.travelers)
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-6 pb-36 lg:pb-12">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-        <div>
-          <div className="flex items-center justify-between gap-4">
-            {stepIndex > 0 ? (
+    <div className="mx-auto max-w-5xl px-4 pt-5 pb-10 lg:pb-12">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            {stepIndex > 0 && (
               <button
                 type="button"
+                aria-label="Zpět na předchozí krok"
                 onClick={() => {
                   setErrors({})
                   setStepIndex((index) => index - 1)
                 }}
-                className="min-h-12 font-medium text-brand-700 underline underline-offset-2"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-sm ring-1 ring-slate-200 transition hover:bg-brand-50 active:scale-90"
               >
-                ← Zpět
+                <ArrowLeft aria-hidden="true" className="size-5" />
               </button>
-            ) : (
-              <span />
             )}
-            <p className="text-sm text-slate-600">
-              Krok {stepIndex + 1} z {STEPS.length} · {step.label}
-            </p>
+            <ProgressRing step={stepIndex + 1} total={STEPS.length} />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-600">
+                Krok {stepIndex + 1} z {STEPS.length}
+                {nextStep && (
+                  <span className="text-slate-500"> · dál {nextStep.label.toLowerCase()}</span>
+                )}
+              </p>
+              <h1
+                ref={headingRef}
+                tabIndex={-1}
+                key={step.id}
+                className="animate-rise text-2xl font-extrabold tracking-tight text-ink outline-none sm:text-3xl"
+              >
+                {STEP_TITLES[step.id]}
+              </h1>
+            </div>
           </div>
-          <div
-            className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200"
-            role="progressbar"
-            aria-label="Postup sjednání"
-            aria-valuemin={1}
-            aria-valuemax={STEPS.length}
-            aria-valuenow={stepIndex + 1}
-          >
-            <div
-              className="h-full bg-brand-700 transition-all"
-              style={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }}
-            />
+
+          <div className="mt-5 space-y-4">
+            {Object.keys(errors).length > 0 && (
+              <p
+                role="alert"
+                className="flex animate-rise items-center gap-2 rounded-2xl bg-red-50 p-3 font-semibold text-red-800 ring-1 ring-red-200"
+              >
+                <CircleAlert aria-hidden="true" className="size-5 shrink-0" />
+                Zkontrolujte, prosím, označená pole.
+              </p>
+            )}
+
+            {step.id === 'trip' && <StepTrip {...stepProps} />}
+            {step.id === 'plan' && <StepPlan {...stepProps} />}
+            {step.id === 'extras' && <StepExtras {...stepProps} />}
+            {step.id === 'details' && <StepDetails {...stepProps} />}
+            {step.id === 'summary' && <StepSummary {...stepProps} />}
+            {step.id === 'payment' && <StepPayment {...stepProps} />}
+
+            {upsellVisible && upsell && (
+              <UpsellNudge
+                key={upsell.plan}
+                offer={upsell}
+                onAccept={() => {
+                  trackEvent('upsell_accepted', {
+                    plan: upsell.plan,
+                    step_number: stepIndex + 1,
+                    step_name: step.id,
+                  })
+                  update({ plan: upsell.plan, luggagePieces: null, luggageSharedConfirmed: false })
+                  setUpsellAccepted(true)
+                }}
+                onDismiss={() => setUpsellDismissed((steps) => [...steps, step.id])}
+              />
+            )}
           </div>
-
-          <h1
-            ref={headingRef}
-            tabIndex={-1}
-            className="mt-5 mb-4 text-2xl font-bold text-slate-900 sm:text-3xl"
-          >
-            {STEP_TITLES[step.id]}
-          </h1>
-
-          {Object.keys(errors).length > 0 && (
-            <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 font-medium text-red-700">
-              Zkontrolujte, prosím, označená pole.
-            </p>
-          )}
-
-          {step.id === 'trip' && <StepTrip {...stepProps} />}
-          {step.id === 'plan' && <StepPlan {...stepProps} />}
-          {step.id === 'extras' && <StepExtras {...stepProps} />}
-          {step.id === 'details' && <StepDetails {...stepProps} />}
-          {step.id === 'summary' && (
-            <StepSummary
-              {...stepProps}
-              upsell={upsell}
-              onAcceptUpsell={() => {
-                if (!upsell) return
-                trackEvent('upsell_accepted', { plan: upsell.plan })
-                update({ plan: upsell.plan, luggagePieces: null })
-              }}
-            />
-          )}
-          {step.id === 'payment' && <StepPayment {...stepProps} />}
         </div>
 
         <DesktopSummary

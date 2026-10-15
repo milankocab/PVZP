@@ -1,18 +1,9 @@
-import { PLANS, REGIONS, TRAVELER_TYPES, formatCzk, type PlanId } from '../../pricing'
-import { Checkbox, Section } from '../components/ui'
+import { CalendarDays, FileCheck2, MapPin, Package, UserRound, Users } from 'lucide-react'
+import { PLANS, REGIONS, TRAVELER_TYPES } from '../../pricing'
+import { Checkbox, IconBadge, Section } from '../components/ui'
 import { formatDate, holderTravels, travelerSlots, type StepProps } from '../stepProps'
 
-export interface UpsellOffer {
-  plan: PlanId
-  difference: number
-}
-
-interface StepSummaryProps extends StepProps {
-  upsell: UpsellOffer | null
-  onAcceptUpsell: () => void
-}
-
-export function StepSummary({ state, update, errors, upsell, onAcceptUpsell }: StepSummaryProps) {
+export function StepSummary({ state, update, errors }: StepProps) {
   if (!state.region || !state.plan) return null
   const slots = travelerSlots(state.travelers)
   const people = slots.map((type, index) => {
@@ -21,54 +12,58 @@ export function StepSummary({ state, update, errors, upsell, onAcceptUpsell }: S
     return { type, name: `${person.firstName} ${person.lastName}`, birthDate: person.birthDate }
   })
 
+  const facts = [
+    { icon: MapPin, tone: 'sky' as const, label: 'Oblast', value: REGIONS[state.region].label },
+    {
+      icon: CalendarDays,
+      tone: 'violet' as const,
+      label: 'Termín',
+      value: `${formatDate(state.departure)} až ${formatDate(state.return)}`,
+    },
+    { icon: Package, tone: 'brand' as const, label: 'Balíček', value: PLANS[state.plan].label },
+  ]
+
   return (
     <div className="space-y-4">
-      {upsell && (
-        <section
-          aria-labelledby="upsell-title"
-          className="rounded-xl border-2 border-accent-500 bg-orange-50 p-4"
-        >
-          <h2 id="upsell-title" className="text-lg font-bold text-slate-900">
-            Za {formatCzk(upsell.difference)} navíc máte {PLANS[upsell.plan].label}
-          </h2>
-          <p className="mt-1 text-slate-800">{PLANS[upsell.plan].shortDescription}.</p>
-          <button
-            type="button"
-            onClick={onAcceptUpsell}
-            className="mt-3 min-h-12 rounded-lg bg-brand-700 px-4 font-semibold text-white hover:bg-brand-800"
-          >
-            Změnit na {PLANS[upsell.plan].label}
-          </button>
-        </section>
-      )}
-
-      <Section title="Cesta">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-slate-800">
-          <dt className="font-medium">Oblast</dt>
-          <dd>{REGIONS[state.region].label}</dd>
-          <dt className="font-medium">Termín</dt>
-          <dd>
-            {formatDate(state.departure)} až {formatDate(state.return)}
-          </dd>
-          <dt className="font-medium">Balíček</dt>
-          <dd>{PLANS[state.plan].label}</dd>
+      <Section title="Cesta" icon={MapPin} tone="sky">
+        <dl className="grid gap-2">
+          {facts.map((fact) => (
+            <div key={fact.label} className="flex items-center gap-3 rounded-2xl bg-canvas p-2.5">
+              <IconBadge icon={fact.icon} tone={fact.tone} size="sm" />
+              <dt className="text-sm text-slate-600">{fact.label}</dt>
+              <dd className="ml-auto text-right font-bold text-ink">{fact.value}</dd>
+            </div>
+          ))}
         </dl>
       </Section>
 
-      <Section title="Pojištění">
+      <Section title="Pojištění" icon={Users} tone="amber">
         {/* ph-no-capture: měření kliků z tohoto seznamu nic nebere, jsou v něm osobní údaje. */}
-        <ul className="ph-no-capture space-y-1 text-slate-800">
-          <li>Pojistník {`${state.policyholder.firstName} ${state.policyholder.lastName}`}</li>
+        <ul className="ph-no-capture space-y-2 text-slate-800">
+          <li className="flex items-center gap-3">
+            <IconBadge icon={UserRound} tone="brand" size="sm" />
+            <span>
+              <span className="block font-bold text-ink">
+                {`${state.policyholder.firstName} ${state.policyholder.lastName}`}
+              </span>
+              <span className="text-sm text-slate-600">Pojistník</span>
+            </span>
+          </li>
           {people.map((person, index) => (
-            <li key={index}>
-              {person.name}, {TRAVELER_TYPES[person.type].label.toLowerCase()}, nar.{' '}
-              {formatDate(person.birthDate)}
+            <li key={index} className="flex items-center gap-3">
+              <IconBadge icon={UserRound} tone="slate" size="sm" />
+              <span>
+                <span className="block font-bold text-ink">{person.name}</span>
+                <span className="text-sm text-slate-600">
+                  {TRAVELER_TYPES[person.type].label}, nar. {formatDate(person.birthDate)}
+                </span>
+              </span>
             </li>
           ))}
         </ul>
       </Section>
 
-      <Section title="Souhlasy">
+      <Section title="Souhlasy" icon={FileCheck2} tone="lime">
         {/* Znění souhlasů a povinné dokumenty je nutné potvrdit s legal týmem. */}
         <Checkbox
           id="terms"
@@ -92,7 +87,7 @@ export function StepSummary({ state, update, errors, upsell, onAcceptUpsell }: S
           checked={state.consents.marketing}
           onChange={(marketing) => update({ consents: { ...state.consents, marketing } })}
         >
-          Chci dostávat nabídky a tipy na cesty (nepovinné).
+          Chci dostávat nabídky a tipy na cesty.
         </Checkbox>
       </Section>
     </div>
