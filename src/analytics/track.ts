@@ -1,4 +1,4 @@
-// Měřicí vrstva. Jedno rozhraní track(event, params) pro lokální úložiště i Google Analytics 4.
+// Měřicí vrstva. Jedno rozhraní track(event, params) pro lokální úložiště, PostHog a Google Analytics 4.
 // Posílá jen parametry z whitelistu níže. Nikdy jména, e-maily, telefony, data narození
 // ani jiný obsah formulářů.
 
@@ -166,10 +166,55 @@ function sendToGa4(name: EventName, params: TrackParams) {
   }
 }
 
-/** Zaznamená event lokálně a případně ho pošle do GA4. */
+// ---------- PostHog ----------
+// Měří všechny kliky na nasazeném prototypu (autocapture) a naše eventy z funnelu.
+// Běží bez cookies a bez localStorage, identita návštěvníka žije jen v paměti stránky.
+// Prvky s osobními údaji mají třídu ph-no-capture, PostHog z nich nic nebere.
+
+type PostHogClient = (typeof import('posthog-js'))['default']
+
+const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY?.trim()
+const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST?.trim() || 'https://eu.i.posthog.com'
+let posthog: PostHogClient | null = null
+let posthogRequested = false
+const posthogQueue: [string, Record<string, unknown>][] = []
+
+/** Načte PostHog jen tehdy, když je nastavené VITE_POSTHOG_KEY. Bez něj se nic nenačítá. */
+export function initPostHog() {
+  if (!POSTHOG_KEY || posthogRequested || typeof window === 'undefined') return
+  posthogRequested = true
+  void import('posthog-js').then(({ default: client }) => {
+    client.init(POSTHOG_KEY, {
+      api_host: POSTHOG_HOST,
+      persistence: 'memory',
+      autocapture: true,
+      capture_pageview: false,
+      capture_pageleave: true,
+      disable_session_recording: true,
+      disable_surveys: true,
+      person_profiles: 'identified_only',
+    })
+    posthog = client
+    for (const [name, props] of posthogQueue.splice(0)) client.capture(name, props)
+  })
+}
+
+function sendToPostHog(name: string, props: Record<string, unknown> = {}) {
+  if (!POSTHOG_KEY) return
+  if (posthog) posthog.capture(name, props)
+  else posthogQueue.push([name, props])
+}
+
+/** Zobrazení stránky. HashRouter nemění adresu tak, aby to PostHog poznal sám. */
+export function trackPageview() {
+  sendToPostHog('$pageview')
+}
+
+/** Zaznamená event lokálně a případně ho pošle do PostHogu a GA4. */
 export function track(name: EventName, params: Record<string, unknown> = {}) {
   if (name === 'funnel_start' || !currentRun) currentRun = newRunId()
   const clean = sanitize(params)
   storeLocally({ name, params: clean, run: currentRun, ts: Date.now() })
+  sendToPostHog(name, { ...clean })
   sendToGa4(name, clean)
 }

@@ -25,7 +25,7 @@ npm run lint     # ESLint
 | `src/analytics/` | A/B přidělení a měřicí vrstva `track(event, params)` |
 | `src/pages/` | Case study `#/`, prototyp `#/sjednani`, ladicí přehled měření `#/vysledky` |
 
-Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=1` zapne nabídku vyššího balíčku před platbou.
+Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=1` zapne nabídku vyššího balíčku před platbou. Nad formulářem je ladicí přepínač variant. Na ostrém webu by nebyl.
 
 ## A/B test
 
@@ -71,10 +71,32 @@ AOV v B je o 15 % vyšší. Konverze klesla o 3 % relativně, tedy pod hranicí 
 
 Podíl objednávek od manažerů po měsících ve srovnání se stejným obdobím loni. Je to slabší důkaz než A/B test, protože ho ovlivní sezóna a kampaně.
 
-## Google Analytics 4 v prototypu
+## Měření na nasazeném prototypu
 
-Bez proměnné `VITE_GA4_ID` se GA4 nenačte a eventy se ukládají jen lokálně pro `#/vysledky`. Lokálně ji jde nastavit v souboru `.env.local` (vzor je v `.env.example`). Nastavení pro GitHub Pages doplním ve fázi 6.
+Pro prototyp používám PostHog. Je zdarma do milionu eventů měsíčně a sám měří všechny kliky (autocapture). Nastavil jsem ho bez cookies a bez localStorage. Návštěvník dostane anonymní ID, které žije jen do zavření nebo obnovení stránky. Nahrávání relací je vypnuté.
 
-GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies, jeho řešení je nutné potvrdit s legal týmem.
+Co PostHog dostává:
+
+- každý klik a změnu ve formuláři, ale bez hodnot polí;
+- zobrazení stránky (`$pageview`) a odchod ze stránky;
+- všechny eventy funnelu z `track()` se stejnými parametry jako GA4, tedy i variantu a segment.
+
+Prvky, které zobrazují osobní údaje (pole se jménem a datem narození, seznam pojištěných ve shrnutí), mají třídu `ph-no-capture`. Kliky z nich PostHog nezaznamená. Každý nový takový prvek musí třídu dostat taky.
+
+### Jak PostHog zapnout
+
+1. Založím si účet na [posthog.com](https://posthog.com) a zvolím EU cloud.
+2. V Project settings zkopíruji Project API key (začíná `phc_`). Klíč je veřejný, patří do kódu stránky, nejde o tajemství.
+3. Lokálně ho vložím do `.env.local` jako `VITE_POSTHOG_KEY` (vzor je v `.env.example`).
+4. Pro GitHub Pages ho uložím jako repository variable `VITE_POSTHOG_KEY`. Workflow ho předá buildu. Workflow připravím ve fázi 6.
+5. V PostHogu je pak v Activity vidět každý klik. Funnel A proti B udělám v Product analytics, Funnels, s rozdělením podle vlastnosti `variant`. Heatmapa kliků je v Toolbaru.
+
+Bez klíče se PostHog vůbec nenačte ani nezabalí do buildu.
+
+Měření bez cookies je pořád zpracování dat o návštěvě. Jestli na ostrém webu stačí bez souhlasu, je nutné potvrdit s legal týmem.
+
+### Google Analytics 4
+
+GA4 je nástroj pro ostrý provoz popsaný výše. V prototypu je volitelný. Bez proměnné `VITE_GA4_ID` se nenačte a eventy se ukládají jen lokálně pro `#/vysledky`. GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies, jeho řešení je nutné potvrdit s legal týmem.
 
 Do analytiky nikdy nejdou jména, e-maily, data narození ani jiný obsah formulářů.

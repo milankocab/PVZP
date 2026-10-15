@@ -56,7 +56,8 @@ export function StepSummary({ state, update, errors, upsell, onAcceptUpsell }: S
       </Section>
 
       <Section title="Pojištění">
-        <ul className="space-y-1 text-slate-800">
+        {/* ph-no-capture: měření kliků z tohoto seznamu nic nebere, jsou v něm osobní údaje. */}
+        <ul className="ph-no-capture space-y-1 text-slate-800">
           <li>Pojistník {`${state.policyholder.firstName} ${state.policyholder.lastName}`}</li>
           {people.map((person, index) => (
             <li key={index}>

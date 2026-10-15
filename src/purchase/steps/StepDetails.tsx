@@ -20,7 +20,7 @@ function PersonFields({
   errors: StepProps['errors']
 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="ph-no-capture grid gap-4 sm:grid-cols-2">
       <TextField
         id={`${prefix}-firstName`}
         label="Jméno"
@@ -85,7 +85,7 @@ export function StepDetails({ state, update, errors }: StepProps) {
           onChange={(patch) => update({ policyholder: { ...state.policyholder, ...patch } })}
           errors={errors}
         />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="ph-no-capture grid gap-4 sm:grid-cols-2">
           <TextField
             id="policyholder-email"
             type="email"

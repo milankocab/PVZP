@@ -181,9 +181,10 @@ Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty s
 - **Měřicí vrstva** `src/analytics/track.ts` s jedním rozhraním `track(event, params)`:
   - vždy uloží event lokálně (pro `#/vysledky`),
   - pokud je nastavené `VITE_GA4_ID`, pošle event i do Google Analytics 4 (gtag). Bez ID se GA4 nenačte.
+  - pokud je nastavené `VITE_POSTHOG_KEY`, pošle event i do PostHogu. PostHog navíc sám měří všechny kliky na nasazeném prototypu (autocapture). Běží bez cookies a bez localStorage. Prvky s osobními údaji mají třídu `ph-no-capture` a PostHog z nich nic nebere. Hodnoty formulářových polí PostHog neukládá nikdy. Nahrávání relací je vypnuté.
   - posílá jen: název eventu, variantu A/B testu, segment a jeho zdroj, účel cesty, číslo a název kroku, oblast, počet cestujících, zvolený balíček, přesnou cenu, název připojištění a jestli je zapnuté, název pole s chybou (nikdy hodnotu), volbu v upozornění na kufr a způsob platby. Whitelist v `track.ts` zahodí cokoli jiného. Cena se nezaokrouhluje, protože AOV je primární metrika a zaokrouhlení by ho zkreslilo. Cena pojištění není osobní údaj. Při dokončení se do GA4 posílá i doporučený event `purchase` s hodnotou a měnou, aby GA4 ukázal AOV v přehledu Monetization. **Nikdy jména, e-maily, data narození.**
 - **Eventy funnelu:** `funnel_start`, `step_view`, `step_complete`, `price_shown` (poprvé), `plan_selected`, `addon_toggled`, `luggage_warning_shown`, `luggage_warning_choice`, `upsell_shown`, `upsell_accepted`, `validation_error`, `checkout_click`, `payment_started` (výběr způsobu platby), `purchase_simulated`. Rozdíl mezi `payment_started` a `purchase_simulated` ukazuje odpad přímo při platbě. Eventy upozornění na kufr ukazují, kolik lidí přejde na Komfort. Eventy nabídky vyššího balíčku jsou pro test 2.
-- **Cookies.** GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies. Znění a řešení je nutné potvrdit s legal týmem.
+- **Cookies.** PostHog v prototypu cookies nepoužívá. Měření bez cookies je přesto zpracování dat o návštěvě, jestli stačí bez souhlasu, je nutné potvrdit s legal týmem. GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies. Znění a řešení je nutné potvrdit s legal týmem.
 - **`#/vysledky`:** tabulka a jednoduchý graf funnelu po krocích pro obě varianty z lokálních dat, rozpad podle segmentu, AOV a konverze po variantách, tlačítko „Smazat data“. Jasný popisek, že jde jen o data z tohoto prohlížeče.
 - **Kalkulačka velikosti vzorku** v case study: hladina významnosti 5 %, síla 80 %. Dva režimy. Pro AOV (primární metrika) vstupy průměrná cena objednávky, směrodatná odchylka a minimální detekovatelný efekt, výstup počet objednávek a návštěv na variantu. Pro konverzi (ochranná metrika) vstupy výchozí konverze a minimální detekovatelný efekt. Výpočet ověř testem proti známé hodnotě.
 
@@ -212,5 +213,5 @@ Struktura stránky (texty napiš jako návrh, já je upravím):
 - Spusť skill `kontrola-textu` na všechny texty a oprav nálezy.
 - Použij subagenta jako nezávislého recenzenta: projde aplikaci proti tomuto zadání (pravidla 1 a 2, přístupnost, mobil, chyby v cenovém modelu) a vrátí seznam problémů. Oprav je.
 - Ověř `npm run build` a `npm run test`.
-- Připrav GitHub Actions workflow pro Pages a v README popiš, jak nastavit `VITE_GA4_ID` jako repository variable.
+- Připrav GitHub Actions workflow pro Pages a v README popiš, jak nastavit `VITE_POSTHOG_KEY` a `VITE_GA4_ID` jako repository variables.
 - Napiš mi checklist, co mám zkontrolovat ručně před pushem.
