@@ -7,8 +7,8 @@ import { formatCzk } from '../pricing'
 import { STEPS } from '../purchase/state'
 
 const VARIANTS: { id: Variant; label: string; color: string }[] = [
-  { id: 'a', label: 'A · bez předvolby', color: '#2a78d6' },
-  { id: 'b', label: 'B · předvybraný Komfort', color: '#eb6834' },
+  { id: 'a', label: 'A · pod sebou', color: '#2a78d6' },
+  { id: 'b', label: 'B · vedle sebe, Komfort', color: '#eb6834' },
 ]
 
 const SEGMENTS: { id: Segment | 'all'; label: string }[] = [

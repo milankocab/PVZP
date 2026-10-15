@@ -81,7 +81,10 @@ const EVENTS: [string, string][] = [
   ['addon_toggled', 'Zapnul nebo vypnul připojištění.'],
   ['luggage_warning_shown', 'Ukázalo se upozornění, že má méně kufrů než cestujících.'],
   ['luggage_warning_choice', 'Co v upozornění zvolil. Kufr navíc, Komfort, nebo nic.'],
-  ['upsell_shown', 'Ukázala se nabídka vyššího balíčku před platbou (test 2).'],
+  [
+    'upsell_shown',
+    'Ukázala se nabídka vyššího balíčku (test 3). Event nese i krok, kde se ukázala.',
+  ],
   ['upsell_accepted', 'Návštěvník nabídku přijal.'],
   ['validation_error', 'Chyba ve formuláři. Posílá jen název pole, nikdy hodnotu.'],
   ['checkout_click', 'Přechod ze shrnutí k platbě.'],
@@ -96,14 +99,14 @@ export function CaseStudyPage() {
       <header>
         <p className="font-semibold text-brand-700">Case study · testování</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
-          Online sjednání cestovního pojištění s A/B testem předvybraného balíčku
+          Online sjednání cestovního pojištění s A/B testem výběru balíčku
         </h1>
         <div className="mt-4 space-y-3 text-lg text-slate-800">
           <p>
             Tohle je case study zaměřená na testování. Navrhl jsem online sjednání cestovního
-            pojištění pro smyšlenou pojišťovnu Odjezd a k němu A/B test předvybraného balíčku. Cílem
-            je zjistit, která verze má nejlepší dopad na průměrnou hodnotu objednávky (AOV), tržby a
-            konverzi.
+            pojištění pro smyšlenou pojišťovnu Odjezd a k němu A/B test kroku s výběrem balíčku.
+            Cílem je zjistit, která verze má nejlepší dopad na průměrnou hodnotu objednávky (AOV),
+            tržby a konverzi.
           </p>
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -121,8 +124,9 @@ export function CaseStudyPage() {
           </Link>
         </div>
         <p className="mt-4 text-sm text-slate-700">
-          Testování v projektu neprobíhá. Ukazuji prototyp, hypotézy a plán testu. Všechna čísla o
-          firmě jsou předpoklady o smyšlené firmě.
+          A/B test v projektu neprobíhá. Ukazuji prototyp, hypotézy a plán testu. Variantu B jsem
+          předem probral v neformálních rozhovorech se 6 lidmi z okolí. Všechna čísla o firmě jsou
+          předpoklady o smyšlené firmě.
         </p>
       </header>
 
@@ -244,35 +248,51 @@ export function CaseStudyPage() {
       <Section id="varianty">
         <p>
           Obě varianty mají stejný postup v 6 krocích. Liší se jen v kroku 2, výběru balíčku.
-          Komfort má v obou štítek „Doporučujeme“. Mění se jen jedna věc, takže výsledek jde přičíst
-          právě předvolbě.
+          Komfort má v obou štítek „Doporučujeme“.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <figure className="rounded-xl bg-slate-50 p-4">
             <figcaption className="mb-4">
-              <strong className="text-slate-900">Varianta A.</strong> Žádný balíček není
-              předvybraný. Klient musí aktivně zvolit.
+              <strong className="text-slate-900">Varianta A.</strong> Balíčky jsou pod sebou. Žádný
+              není předvybraný. Klient musí aktivně zvolit.
             </figcaption>
-            <PlanPickerMock selected={null} />
+            <PlanPickerMock layout="stacked" selected={null} />
           </figure>
           <figure className="rounded-xl bg-slate-50 p-4">
             <figcaption className="mb-4">
-              <strong className="text-slate-900">Varianta B.</strong> Komfort je předvybraný. Klient
-              ho může změnit.
+              <strong className="text-slate-900">Varianta B.</strong> Balíčky jsou vedle sebe a
+              posouvají se prstem. Komfort je předvybraný. Klient ho může změnit.
             </figcaption>
-            <PlanPickerMock selected="comfort" />
+            <PlanPickerMock layout="carousel" selected="comfort" />
           </figure>
         </div>
         <p className="text-sm text-slate-700">
           Zjednodušený náhled. Ceny pro 1 dospělého, Evropa, 7 dní.
         </p>
 
+        <H3>Proč měním dvě věci najednou</H3>
+        <p>
+          Testuji celý způsob výběru balíčku, ne jeden prvek. Karty vedle sebe s jednou kartou
+          uprostřed působí, jako by služba už byla vybraná. Předvolba Komfortu k tomuto zobrazení
+          patří. Bez ní by klient viděl kartu uprostřed, ale nebyla by vybraná.
+        </p>
+        <p>
+          Opřel jsem se o neformální rozhovory se 6 lidmi z mého okolí. Ukázal jsem jim obě verze a
+          zeptal se, kterou by chtěli používat. 5 z 6 zvolilo verzi s předvybraným balíčkem. Vzorek
+          je malý a nejde o reprezentativní výzkum. Rozhovory beru jako signál, že má smysl test
+          spustit, ne jako důkaz.
+        </p>
+        <p>
+          Cena za to je, že test neřekne, jestli rozdíl způsobilo zobrazení, nebo předvolba. Když B
+          vyhraje, rozdělím to dalším testem, viz plán testů.
+        </p>
+
         <H3>Hypotéza 1, ověřuje ji A/B test</H3>
         <Quote>
-          Pokud bude Komfort předvybraný, zvýší se průměrná hodnota objednávky (AOV), aniž by
-          konverze z funnel_start na purchase_simulated relativně klesla o víc než 5&nbsp;%, protože
-          většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než odpovídá jeho
-          přínosu.
+          Pokud budou balíčky vedle sebe a Komfort předvybraný, zvýší se průměrná hodnota objednávky
+          (AOV), aniž by konverze z funnel_start na purchase_simulated relativně klesla o víc než
+          5&nbsp;%, protože většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než
+          odpovídá jeho přínosu.
         </Quote>
 
         <H3>Hypotéza 2, A/B test ji neověří</H3>
@@ -395,14 +415,18 @@ export function CaseStudyPage() {
         <H3>Plán testů</H3>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            <strong>Test 1.</strong> Předvybraný Komfort proti výběru bez předvolby. Nabídka vyššího
-            balíčku před platbou je v obou vypnutá.
+            <strong>Test 1.</strong> Balíčky pod sebou bez předvolby proti balíčkům vedle sebe s
+            předvybraným Komfortem. Nabídka vyššího balíčku je v obou zapnutá.
           </li>
           <li>
-            <strong>Test 2.</strong> Na vítězné variantě nabídka vyššího balíčku před platbou
-            zapnutá proti vypnuté. V prototypu ji ukážete parametrem{' '}
-            <Link to="/sjednani?upsell=1" className="text-brand-700 underline underline-offset-4">
-              ?upsell=1
+            <strong>Test 2.</strong> Když vyhraje B, karty vedle sebe s předvolbou proti kartám
+            vedle sebe bez předvolby. Tím zjistím, kolik dělá samotná předvolba.
+          </li>
+          <li>
+            <strong>Test 3.</strong> Na vítězné variantě nabídka vyššího balíčku zapnutá proti
+            vypnuté. V prototypu ji vypnete parametrem{' '}
+            <Link to="/sjednani?upsell=0" className="text-brand-700 underline underline-offset-4">
+              ?upsell=0
             </Link>
             .
           </li>
@@ -411,7 +435,10 @@ export function CaseStudyPage() {
             na konverzi.
           </li>
         </ol>
-        <p>V jednom testu měním jen jednu věc. Jinak bych nepoznal, co výsledek způsobilo.</p>
+        <p>
+          Obvykle v jednom testu měním jen jednu věc, jinak nepoznám, co výsledek způsobilo. Test 1
+          je výjimka a důvod popisuji v sekci Varianty a hypotézy.
+        </p>
       </Section>
 
       {/* 5. Měření */}
@@ -471,8 +498,8 @@ export function CaseStudyPage() {
       {/* 6. Reálný provoz */}
       <Section id="realny-provoz">
         <p>
-          Testování v tomto projektu neprobíhá, ani A/B test, ani test s uživateli. Takhle bych
-          postupoval na skutečném provozu.
+          A/B test v tomto projektu neprobíhá. S lidmi jsem mluvil jen neformálně, 6 rozhovorů v
+          okolí popisuji v sekci 3. Takhle bych postupoval na skutečném provozu.
         </p>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
@@ -532,8 +559,8 @@ export function CaseStudyPage() {
           <li>Platba je jen simulace. Žádná smlouva nevzniká.</li>
           <li>Měření na stránce Měření je jen z vašeho prohlížeče. Neukazuje výsledky testu.</li>
           <li>
-            Neproběhlo žádné skutečné testování. Hypotézy a čísla v plánu nejsou ověřené na
-            skutečných zákaznících.
+            A/B test neproběhl. Rozhovory se 6 lidmi z okolí nejsou reprezentativní. Hypotézy a
+            čísla v plánu nejsou ověřené na skutečných zákaznících.
           </li>
         </Bullets>
       </Section>
