@@ -61,6 +61,8 @@ function Breakdown({ price }: { price: PriceBreakdown }) {
 }
 
 interface PriceBarProps extends PriceDisplayProps {
+  /** Rozpis ceny „od“ pro Základ, dokud klient nevybral balíček. */
+  fromBreakdown: PriceBreakdown | null
   continueLabel: string
   onContinue: () => void
 }
@@ -97,14 +99,21 @@ const SWIPE_THRESHOLD = 36
  * Rozpis ceny vyjede nahoru po kliknutí na úchyt se šipkou nebo po swipu nahoru.
  * Na širší obrazovce se místo ní ukazuje boční souhrn.
  */
-export function MobilePriceBar({ price, fromPrice, continueLabel, onContinue }: PriceBarProps) {
+export function MobilePriceBar({
+  price,
+  fromPrice,
+  fromBreakdown,
+  continueLabel,
+  onContinue,
+}: PriceBarProps) {
   const [open, setOpen] = useState(false)
   const sheet = useRef<HTMLDivElement>(null)
   const grid = useRef<HTMLDivElement>(null)
   const breakdownRef = useRef<HTMLDivElement>(null)
   const touchStart = useRef<number | null>(null)
   const showPrice = price !== null || fromPrice !== null
-  const canOpen = price !== null
+  const breakdown = price ?? fromBreakdown
+  const canOpen = breakdown !== null
   const isOpen = open && canOpen
 
   // Výšku sbalené lišty pošleme patičce stránky, aby text pod ní šel doscrollovat.
@@ -194,8 +203,15 @@ export function MobilePriceBar({ price, fromPrice, continueLabel, onContinue }: 
         >
           <div className="overflow-hidden" inert={!isOpen}>
             <div ref={breakdownRef} className="max-h-[55vh] overflow-y-auto px-4 pt-1 pb-3">
-              <p className="mb-3 text-base font-extrabold text-ink">Rozpis ceny</p>
-              {price && <Breakdown price={price} />}
+              <p className="text-base font-extrabold text-ink">Rozpis ceny</p>
+              {!price && (
+                <p className="text-sm text-slate-600">Cena „od“ platí pro balíček Základ.</p>
+              )}
+              {breakdown && (
+                <div className="mt-3">
+                  <Breakdown price={breakdown} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -218,7 +234,14 @@ export function MobilePriceBar({ price, fromPrice, continueLabel, onContinue }: 
   )
 }
 
-export function DesktopSummary({ price, fromPrice, continueLabel, onContinue }: PriceBarProps) {
+export function DesktopSummary({
+  price,
+  fromPrice,
+  fromBreakdown,
+  continueLabel,
+  onContinue,
+}: PriceBarProps) {
+  const breakdown = price ?? fromBreakdown
   return (
     <aside
       aria-label="Souhrn ceny"
@@ -228,9 +251,12 @@ export function DesktopSummary({ price, fromPrice, continueLabel, onContinue }: 
       <p className="text-3xl font-extrabold text-ink" aria-live="polite">
         <PriceValue price={price} fromPrice={fromPrice} />
       </p>
-      {price && (
+      {breakdown && (
         <div className="mt-4 border-t border-slate-100 pt-4">
-          <Breakdown price={price} />
+          {!price && (
+            <p className="mb-3 text-sm text-slate-600">Cena „od“ platí pro balíček Základ.</p>
+          )}
+          <Breakdown price={breakdown} />
         </div>
       )}
       <ContinueButton label={continueLabel} onClick={onContinue} className="mt-5 w-full" />

@@ -1,6 +1,7 @@
 import { ArrowRight, Crown, TrendingUp } from 'lucide-react'
 import { PLANS, formatCzk, type PlanId } from '../../pricing'
 import { COVERAGE_ICONS, upgradeDiffs } from '../coverage'
+import { CoverageLabel } from '../steps/StepPlan'
 import { IconBadge } from './ui'
 
 export interface UpsellOffer {
@@ -60,7 +61,9 @@ export function UpsellNudge({
           >
             <IconBadge {...COVERAGE_ICONS[diff.id]} size="sm" />
             <span className="min-w-0 flex-1 text-sm">
-              <span className="block font-semibold text-ink">{diff.label}</span>
+              <span className="block font-semibold text-ink">
+                <CoverageLabel id={diff.id}>{diff.label}</CoverageLabel>
+              </span>
               <span className="text-slate-500 line-through decoration-slate-400">
                 <DiffValue value={diff.from} />
               </span>

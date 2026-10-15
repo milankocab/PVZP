@@ -98,10 +98,25 @@ describe('PurchaseFlow', () => {
     expect(serialized).not.toMatch(/Ukázkov|example\.com|777|1986|1984/)
   })
 
-  it('ve variantě B je Komfort předvybraný', () => {
+  it('ve variantě B jsou balíčky vedle sebe a Komfort je předvybraný', () => {
     renderFlow('b')
     fillTrip()
     expect(screen.getByRole('radio', { name: /Komfort/ })).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Ukázat balíček Prémium' })).toBeInTheDocument()
+  })
+
+  it('ve variantě A jsou balíčky pod sebou a žádný není vybraný', () => {
+    renderFlow('a')
+    fillTrip()
+    for (const radio of screen.getAllByRole('radio')) expect(radio).not.toBeChecked()
+    expect(screen.queryByRole('button', { name: /Ukázat balíček/ })).not.toBeInTheDocument()
+  })
+
+  it('parametr krytí po kliknutí vysvětlí, co znamená', () => {
+    renderFlow('b')
+    fillTrip()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Plnění za elektroniku' })[0])
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/Časová cena znamená/)
   })
 
   it('u sdíleného kufru v Základu upozorní a nabídne Komfort', () => {

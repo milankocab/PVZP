@@ -15,17 +15,24 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Tip } from '../../components/Tip'
 import {
   COVERAGE_ROWS,
   PLAN_ORDER,
   PLANS,
   formatCzk,
   tryCalculatePrice,
+  type CoverageRowId,
   type PlanId,
+  type PriceBreakdown,
 } from '../../pricing'
-import { COVERAGE_ICONS, isUpgradeOverLower } from '../coverage'
+import { COVERAGE_EXPLANATIONS, COVERAGE_ICONS } from '../coverage'
 import { ErrorText, IconBadge, YesNoMark, type Tone } from '../components/ui'
-import { toBasePriceInput, type StepProps } from '../stepProps'
+import { TONES } from '../components/tones'
+import { toBasePriceInput, type FormState, type StepProps } from '../stepProps'
+
+/** Jak se balíčky ukazují. Tohle je předmět A/B testu. */
+export type PlanLayout = 'stacked' | 'carousel'
 
 // Přínosy na kartách. Nahoře je to, co řeší manažeři s pracovní elektronikou.
 const HIGHLIGHTS: Record<PlanId, { icon: LucideIcon; tone: Tone; text: string }[]> = {
@@ -36,7 +43,7 @@ const HIGHLIGHTS: Record<PlanId, { icon: LucideIcon; tone: Tone; text: string }[
     { icon: Headset, tone: 'sky', text: 'Lékařská asistence nonstop' },
   ],
   comfort: [
-    { icon: Laptop, tone: 'violet', text: 'Notebook i telefon. 50 000 Kč na kufr' },
+    { icon: Laptop, tone: 'violet', text: '50 000 Kč na kufr, 40 000 Kč na kus elektroniky' },
     { icon: Luggage, tone: 'accent', text: 'Kufr v ceně pro každého' },
     { icon: Stethoscope, tone: 'rose', text: 'Léčebné výlohy do 25 mil. Kč' },
     { icon: FileText, tone: 'sky', text: 'Pomoc při ztrátě dokladů a právní pomoc' },
@@ -56,25 +63,152 @@ const CARD_HEAD: Record<PlanId, string> = {
   premium: 'bg-gradient-to-br from-ink to-brand-900 text-white',
 }
 
+const panelClass =
+  'rounded-3xl bg-white shadow-[0_1px_2px_rgb(16_41_45/0.06),0_8px_24px_-12px_rgb(16_41_45/0.12)]'
+
+/** Ikona bez barevného pozadí. Barva zůstává, aby šly parametry najít očima. */
+function PlainIcon({ icon: Icon, tone }: { icon: LucideIcon; tone: Tone }) {
+  return (
+    <Icon
+      aria-hidden="true"
+      strokeWidth={2.2}
+      className={`size-5 shrink-0 ${TONES[tone].split(' ')[1]}`}
+    />
+  )
+}
+
 function CoverageValue({ value }: { value: string | boolean }) {
   if (value === true) return <YesNoMark yes />
   if (value === false) return <YesNoMark yes={false} />
   return <>{value}</>
 }
 
-export function StepPlan({ state, update, errors }: StepProps) {
-  const scroller = useRef<HTMLDivElement>(null)
-  const cards = useRef<Partial<Record<PlanId, HTMLLabelElement | null>>>({})
-  // Posuvník začíná v obou variantách na Komfortu se štítkem Doporučujeme. Varianty se tak liší
-  // jen předvolbou, ne tím, co klient uvidí jako první.
-  const [active, setActive] = useState<PlanId>(state.plan ?? 'comfort')
+/** Název parametru, který po kliknutí vysvětlí, co znamená. */
+export function CoverageLabel({ id, children }: { id: CoverageRowId; children: string }) {
+  return (
+    <Tip
+      content={COVERAGE_EXPLANATIONS[id]}
+      className="text-left underline decoration-slate-300 decoration-dotted decoration-2 underline-offset-4 transition-colors hover:decoration-brand-500 aria-expanded:decoration-brand-500"
+    >
+      {children}
+    </Tip>
+  )
+}
 
-  const prices = Object.fromEntries(
+function usePrices(state: FormState) {
+  return Object.fromEntries(
     PLAN_ORDER.map((id) => {
       const input = toBasePriceInput(state, id)
       return [id, input ? tryCalculatePrice(input) : null]
     }),
-  ) as Record<PlanId, ReturnType<typeof tryCalculatePrice>>
+  ) as Record<PlanId, PriceBreakdown | null>
+}
+
+function PriceTag({ price, light = false }: { price: PriceBreakdown | null; light?: boolean }) {
+  if (!price) return <span className="text-sm opacity-80">Cena po vyplnění cesty</span>
+  return (
+    <span className="flex flex-wrap items-baseline gap-x-2">
+      <span className="text-2xl font-extrabold tracking-tight tabular-nums">
+        {formatCzk(price.total)}
+      </span>
+      <span className={`text-sm ${light ? 'text-white/80' : 'text-slate-600'}`}>
+        {formatCzk(Math.round(price.total / price.days))} za den
+      </span>
+    </span>
+  )
+}
+
+/** Varianta A. Balíčky pod sebou, žádný není vybraný. */
+function StackedPlans({ state, update, errors }: StepProps) {
+  const prices = usePrices(state)
+  return (
+    <fieldset aria-describedby={errors.plan ? 'plan-error' : undefined} className="min-w-0">
+      <legend className="sr-only">Balíček</legend>
+      <div className="space-y-4 pt-2">
+        {PLAN_ORDER.map((id, index) => {
+          const plan = PLANS[id]
+          const isSelected = state.plan === id
+          return (
+            <label
+              key={id}
+              style={{ animationDelay: `${index * 70}ms` }}
+              className={`group relative block animate-rise cursor-pointer rounded-3xl p-4 shadow-[0_10px_30px_-16px_rgb(16_41_45/0.35)] ring-2 transition duration-200 active:scale-[0.99] has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-800 ${
+                isSelected
+                  ? 'bg-brand-50 ring-brand-500'
+                  : errors.plan
+                    ? 'bg-white ring-red-700'
+                    : 'bg-white ring-transparent hover:ring-brand-200'
+              }`}
+            >
+              {plan.recommended && (
+                <span className="absolute -top-3 left-4 inline-flex items-center gap-1 rounded-full bg-accent-500 px-2.5 py-1 text-xs font-extrabold text-ink shadow">
+                  <Star aria-hidden="true" className="size-3.5 fill-current" />
+                  Doporučujeme
+                </span>
+              )}
+              <input
+                type="radio"
+                name="plan"
+                value={id}
+                checked={isSelected}
+                onChange={() => update({ plan: id, luggageSharedConfirmed: false })}
+                className="sr-only"
+              />
+              <span className="flex items-start gap-3">
+                <span
+                  aria-hidden="true"
+                  className={`mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition duration-300 ${
+                    isSelected
+                      ? 'border-brand-500 bg-brand-500 text-white'
+                      : 'border-slate-300 bg-white text-transparent'
+                  }`}
+                >
+                  <Check
+                    className={`size-4 transition duration-300 ${isSelected ? 'scale-100' : 'scale-50'}`}
+                    strokeWidth={3.5}
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                    <span className="flex items-center gap-1.5 text-xl font-extrabold text-ink">
+                      {plan.label}
+                      {id === 'premium' && (
+                        <Crown aria-hidden="true" className="size-5 text-amber-500" />
+                      )}
+                    </span>
+                    <span className="text-ink">
+                      <PriceTag price={prices[id]} />
+                    </span>
+                  </span>
+                  <ul className="mt-3 space-y-2">
+                    {HIGHLIGHTS[id].map((item) => (
+                      <li
+                        key={item.text}
+                        className="flex items-center gap-2.5 text-sm text-slate-800"
+                      >
+                        <PlainIcon icon={item.icon} tone={item.tone} />
+                        <span className="leading-snug">{item.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </span>
+              </span>
+            </label>
+          )
+        })}
+      </div>
+      <ErrorText id="plan-error" message={errors.plan} />
+    </fieldset>
+  )
+}
+
+/** Varianta B. Balíčky vedle sebe na swipe, pod nimi detail aktivního balíčku. */
+function CarouselPlans({ state, update, errors }: StepProps) {
+  const scroller = useRef<HTMLDivElement>(null)
+  const cards = useRef<Partial<Record<PlanId, HTMLLabelElement | null>>>({})
+  // Posuvník začíná na vybraném balíčku, jinak na doporučeném Komfortu.
+  const [active, setActive] = useState<PlanId>(state.plan ?? 'comfort')
+  const prices = usePrices(state)
 
   const scrollTo = (id: PlanId, smooth = true) => {
     const container = scroller.current
@@ -122,7 +256,7 @@ export function StepPlan({ state, update, errors }: StepProps) {
   }
 
   return (
-    <div className="space-y-5">
+    <>
       {/* Přepínač nad kartami. Stejná funkce jako swipe, jen pro ty, kdo neswipují. */}
       <div className="relative grid grid-cols-3 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200 lg:hidden">
         <span
@@ -164,10 +298,8 @@ export function StepPlan({ state, update, errors }: StepProps) {
         >
           {PLAN_ORDER.map((id) => {
             const plan = PLANS[id]
-            const price = prices[id]
             const isActive = active === id
             const isSelected = state.plan === id
-            const dark = id !== 'basic'
             return (
               <label
                 key={id}
@@ -205,18 +337,9 @@ export function StepPlan({ state, update, errors }: StepProps) {
                   )}
                   <span className="block text-sm font-semibold opacity-80">Balíček</span>
                   <span className="block text-2xl font-extrabold tracking-tight">{plan.label}</span>
-                  {price ? (
-                    <span className="mt-3 flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold tracking-tight tabular-nums">
-                        {formatCzk(price.total)}
-                      </span>
-                      <span className={`text-sm ${dark ? 'text-white/80' : 'text-slate-600'}`}>
-                        {formatCzk(Math.round(price.total / price.days))} za den
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="mt-3 block text-sm opacity-80">Cena po vyplnění cesty</span>
-                  )}
+                  <span className="mt-3 block">
+                    <PriceTag price={prices[id]} light={id !== 'basic'} />
+                  </span>
                 </span>
                 <ul className="flex-1 space-y-2.5 p-4">
                   {HIGHLIGHTS[id].map((item) => (
@@ -262,107 +385,114 @@ export function StepPlan({ state, update, errors }: StepProps) {
         <ErrorText id="plan-error" message={errors.plan} />
       </fieldset>
 
-      <section
-        aria-labelledby="plan-detail-title"
-        className="rounded-3xl bg-white p-4 shadow-[0_1px_2px_rgb(16_41_45/0.06),0_8px_24px_-12px_rgb(16_41_45/0.12)] sm:p-5"
-      >
+      <section aria-labelledby="plan-detail-title" className={`${panelClass} p-4 sm:p-5`}>
         <h2 id="plan-detail-title" className="text-lg font-extrabold tracking-tight text-ink">
           Co je v balíčku {PLANS[active].label}
         </h2>
-        <ul key={active} className="mt-3 divide-y divide-slate-100">
+        <p className="text-sm text-slate-600">Klepnutím na parametr zobrazíte vysvětlení.</p>
+        <ul key={active} className="mt-2 divide-y divide-slate-100">
           {COVERAGE_ROWS.map((row, index) => {
             const value = row.values[active]
-            const better = isUpgradeOverLower(row.id, active)
             return (
               <li
                 key={row.id}
                 style={{ animationDelay: `${index * 30}ms` }}
-                className={`flex animate-rise items-center gap-3 py-2.5 ${
+                className={`flex min-h-13 animate-rise items-center gap-3 py-3 ${
                   value === false ? 'opacity-50' : ''
                 }`}
               >
-                <IconBadge
-                  {...COVERAGE_ICONS[row.id]}
+                <PlainIcon
+                  icon={COVERAGE_ICONS[row.id].icon}
                   tone={value === false ? 'slate' : COVERAGE_ICONS[row.id].tone}
-                  size="sm"
                 />
-                <span className="min-w-0 flex-1 text-sm text-slate-800">{row.label}</span>
-                <span className="flex shrink-0 items-center gap-1.5 text-right text-sm font-bold text-ink">
-                  {better && (
-                    <span className="rounded-full bg-accent-100 px-1.5 py-0.5 text-[11px] font-extrabold text-accent-700">
-                      víc
-                    </span>
-                  )}
+                <span className="min-w-0 flex-1 text-sm text-slate-800">
+                  <CoverageLabel id={row.id}>{row.label}</CoverageLabel>
+                </span>
+                <span className="shrink-0 text-right text-sm font-bold text-ink">
                   <CoverageValue value={value} />
                 </span>
               </li>
             )
           })}
         </ul>
-        <p className="mt-2 text-xs text-slate-500">
-          Štítek „víc“ znamená lepší krytí než v nižším balíčku.
-        </p>
       </section>
+    </>
+  )
+}
 
-      <details className="group rounded-3xl bg-white shadow-[0_1px_2px_rgb(16_41_45/0.06),0_8px_24px_-12px_rgb(16_41_45/0.12)]">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 font-bold text-ink sm:px-5 [&::-webkit-details-marker]:hidden">
-          Porovnat všechny balíčky
-          <span
-            aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition-transform duration-300 group-open:rotate-45"
-          >
-            +
-          </span>
-        </summary>
-        <table className="w-full animate-fade border-separate border-spacing-0 text-sm">
-          <caption className="sr-only">Srovnání krytí balíčků</caption>
-          <thead className="sticky top-0">
+/** Srovnání všech balíčků. Je v obou variantách stejné. */
+function Comparison({ selected }: { selected: PlanId | null }) {
+  return (
+    <details className={`group ${panelClass}`}>
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 font-bold text-ink sm:px-5 [&::-webkit-details-marker]:hidden">
+        Porovnat všechny balíčky
+        <span
+          aria-hidden="true"
+          className="flex size-8 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition-transform duration-300 group-open:rotate-45"
+        >
+          +
+        </span>
+      </summary>
+      <table className="w-full animate-fade border-separate border-spacing-0 text-sm">
+        <caption className="sr-only">Srovnání krytí balíčků</caption>
+        <thead>
+          <tr>
+            {PLAN_ORDER.map((id) => (
+              <th
+                key={id}
+                id={`compare-${id}`}
+                scope="col"
+                className={`w-1/3 border-b-2 border-slate-200 px-2 pt-1 pb-3 text-center font-extrabold ${
+                  selected === id ? 'text-brand-700' : 'text-ink'
+                }`}
+              >
+                {PLANS[id].label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {/* Každý parametr je samostatný blok se střídavým pozadím a čárou. Název je nad hodnotami
+            přes celou šířku, hodnoty mají třetinu šířky a vejdou se i na 375 px. */}
+        {COVERAGE_ROWS.map((row, index) => (
+          <tbody key={row.id} className={index % 2 === 1 ? 'bg-slate-50/80' : ''}>
+            <tr>
+              <th
+                id={`compare-row-${row.id}`}
+                colSpan={3}
+                scope="colgroup"
+                className="border-t border-slate-200 px-4 pt-4 pb-2.5 text-left text-xs font-bold tracking-wide text-slate-600 uppercase sm:px-5"
+              >
+                <span className="flex items-center gap-2">
+                  <PlainIcon {...COVERAGE_ICONS[row.id]} />
+                  <CoverageLabel id={row.id}>{row.label}</CoverageLabel>
+                </span>
+              </th>
+            </tr>
             <tr>
               {PLAN_ORDER.map((id) => (
-                <th
+                <td
                   key={id}
-                  id={`compare-${id}`}
-                  scope="col"
-                  className={`w-1/3 bg-white px-2 pt-1 pb-2 text-center font-extrabold ${
-                    state.plan === id ? 'text-brand-700' : 'text-ink'
+                  headers={`compare-${id} compare-row-${row.id}`}
+                  className={`px-1 pt-1 pb-4 text-center text-[15px] leading-tight font-bold text-balance ${
+                    selected === id ? 'text-brand-700' : 'text-ink'
                   }`}
                 >
-                  {PLANS[id].label}
-                </th>
+                  <CoverageValue value={row.values[id]} />
+                </td>
               ))}
             </tr>
-          </thead>
-          {/* Název řádku je nad hodnotami přes celou šířku. Hodnoty pak mají třetinu šířky
-              a vejdou se na jeden řádek i na 375 px. */}
-          {COVERAGE_ROWS.map((row) => (
-            <tbody key={row.id}>
-              <tr>
-                <th
-                  id={`compare-row-${row.id}`}
-                  colSpan={3}
-                  scope="colgroup"
-                  className="border-t border-slate-100 px-4 pt-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase sm:px-5"
-                >
-                  {row.label}
-                </th>
-              </tr>
-              <tr>
-                {PLAN_ORDER.map((id) => (
-                  <td
-                    key={id}
-                    headers={`compare-${id} compare-row-${row.id}`}
-                    className={`px-1 pt-1 pb-3 text-center leading-tight font-bold text-balance text-ink ${
-                      state.plan === id ? 'bg-brand-50/70' : ''
-                    }`}
-                  >
-                    <CoverageValue value={row.values[id]} />
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          ))}
-        </table>
-      </details>
+          </tbody>
+        ))}
+      </table>
+    </details>
+  )
+}
+
+export function StepPlan({ layout, ...props }: StepProps & { layout: PlanLayout }) {
+  return (
+    <div className="space-y-5">
+      {layout === 'stacked' ? <StackedPlans {...props} /> : <CarouselPlans {...props} />}
+      <Comparison selected={props.state.plan} />
     </div>
   )
 }

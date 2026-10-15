@@ -86,7 +86,10 @@ interface PurchaseFlowProps {
   utmAudience?: string | null
 }
 
-/** Varianta A nemá předvybraný balíček, varianta B má předvybraný Komfort. Jinak jsou stejné. */
+/**
+ * Varianta A ukazuje balíčky pod sebou a žádný nemá vybraný.
+ * Varianta B ukazuje balíčky vedle sebe na swipe a má předvybraný Komfort.
+ */
 function preselectedPlanFor(variant: Variant): PlanId | null {
   return variant === 'b' ? 'comfort' : null
 }
@@ -119,8 +122,9 @@ export function PurchaseFlow({
   const nextStep = STEPS[stepIndex + 1] ?? null
   const price = priceFor(state)
   const basicInput = toBasePriceInput(state, 'basic')
-  const fromPrice =
-    !state.plan && basicInput ? (tryCalculatePrice(basicInput)?.total ?? null) : null
+  // Dokud není vybraný balíček, lišta ukazuje cenu „od“ podle Základu i s rozpisem a slevami.
+  const fromBreakdown = !state.plan && basicInput ? tryCalculatePrice(basicInput) : null
+  const fromPrice = fromBreakdown?.total ?? null
 
   // Kontext, který jde s každým eventem. Žádné osobní údaje, jen parametry z whitelistu track().
   const trackEvent = (name: EventName, extra: Record<string, unknown> = {}, from = state) => {
@@ -373,7 +377,9 @@ export function PurchaseFlow({
             )}
 
             {step.id === 'trip' && <StepTrip {...stepProps} />}
-            {step.id === 'plan' && <StepPlan {...stepProps} />}
+            {step.id === 'plan' && (
+              <StepPlan {...stepProps} layout={variant === 'b' ? 'carousel' : 'stacked'} />
+            )}
             {step.id === 'extras' && <StepExtras {...stepProps} />}
             {step.id === 'details' && <StepDetails {...stepProps} />}
             {step.id === 'summary' && <StepSummary {...stepProps} />}
@@ -401,6 +407,7 @@ export function PurchaseFlow({
         <DesktopSummary
           price={price}
           fromPrice={fromPrice}
+          fromBreakdown={fromBreakdown}
           continueLabel={continueLabel}
           onContinue={handleContinue}
         />
@@ -409,6 +416,7 @@ export function PurchaseFlow({
       <MobilePriceBar
         price={price}
         fromPrice={fromPrice}
+        fromBreakdown={fromBreakdown}
         continueLabel={continueLabel}
         onContinue={handleContinue}
       />
