@@ -1,4 +1,7 @@
-// Všechny ceny, limity a podmínky jsou smyšlené. Nejde o ceník žádné pojišťovny.
+// Ceny jsou smyšlené, ale ukotvené v řádu trhu (desítky korun za den v Evropě).
+// Výjimka schválená Milanem 15. 10. 2026: limity léčebných výloh a odpovědnosti a slevy
+// pro pojištěnce VZP a členy Klubu pevného zdraví odpovídají veřejné kalkulačce cestovního
+// pojištění PVZP (říjen 2026). Case study to transparentně uvádí jako analýzu trhu.
 // Částky jsou v Kč. Úpravou tohoto souboru se změní ceny v celém prototypu.
 // Testy v calculatePrice.test.ts mají pevná očekávaná čísla, po změně cen je uprav.
 
@@ -10,23 +13,25 @@ export type AddonId = 'winterSports' | 'cancellation'
 export const MAX_TRIP_DAYS = 90
 export const MAX_TRAVELERS = 9
 
+// Denní sazba dospělého v balíčku Základ. Evropa odpovídá řádu trhu.
+// TODO(Milan): ověřit poměr cen mezi oblastmi, poměry 1,8× a 2,9× jsou odhad.
 export const REGIONS: Record<RegionId, { label: string; description: string; dailyRate: number }> =
   {
     europe: {
       label: 'Evropa',
       description:
         'Všechny státy Evropy a evropská část Ruska, Maroko, Alžírsko, Tunisko, Libye, Turecko, Izrael, Jordánsko a Kypr',
-      dailyRate: 18,
+      dailyRate: 38,
     },
     'world-no-us-ca': {
       label: 'Svět bez USA a Kanady',
       description: 'Všechny státy světa kromě USA a Kanady',
-      dailyRate: 32,
+      dailyRate: 68,
     },
     world: {
       label: 'Celý svět',
       description: 'Všechny státy světa',
-      dailyRate: 52,
+      dailyRate: 110,
     },
   }
 
@@ -40,7 +45,8 @@ export const TRAVELER_TYPES: Record<
 }
 
 // Rodinná sleva platí při 2 dospělých (dospělý nebo senior) a alespoň 1 dítěti.
-// Sleva se počítá jen ze základního pojistného, ne z připojištění.
+// Všechny slevy se počítají jen ze základního pojistného, ne z připojištění,
+// a řetězí se za sebou (každá z ceny po předchozí slevě).
 export const FAMILY_DISCOUNT = {
   label: 'Rodinná sleva',
   requiredAdults: 2,
@@ -48,27 +54,33 @@ export const FAMILY_DISCOUNT = {
   rate: 0.15,
 }
 
+// Slevy převzaté z veřejné kalkulačky PVZP (schválená výjimka, viz začátek souboru).
+// Sleva pro členy Klubu pevného zdraví je dodatečná a platí jen pro pojištěnce VZP.
+// Prototyp je bere za celou smlouvu, ne po jednotlivých cestujících.
+// TODO(Milan): ověřit, jestli se slevy na webu sčítají, nebo řetězí, a jestli platí na osobu.
+export const MEMBER_DISCOUNTS = {
+  healthInsurer: { label: 'Sleva pro pojištěnce VZP', rate: 0.2 },
+  healthClub: { label: 'Sleva pro členy Klubu pevného zdraví', rate: 0.1 },
+}
+
 export type CoverageValue = string | boolean
 
-export type ExtraLuggagePricing =
-  /** Pevná cena za kufr na celou cestu. */
-  | { type: 'fixed'; amount: number }
-  /**
-   * Cena za kufr jako násobek denní sazby dospělého v tomto balíčku a počtu dní.
-   * Doplatek za kufry ale nikdy nezvedne cenu balíčku nad podíl ceny jiného balíčku.
-   */
-  | {
-      type: 'dailyRate'
-      dailyRateMultiplier: number
-      cap: { plan: PlanId; share: number }
-    }
+/**
+ * Cena za kufr navíc za každý den cesty jako násobek denní sazby dospělého v balíčku.
+ * Volitelný strop: doplatek za kufry nikdy nezvedne cenu balíčku nad podíl ceny jiného balíčku.
+ */
+export interface ExtraLuggagePricing {
+  dailyRateMultiplier: number
+  cap?: { plan: PlanId; share: number }
+}
 
 export interface Plan {
   id: PlanId
   label: string
-  /** Násobek denní sazby. Komfort je o 150 % dražší než Základ, Prémium o 20 % dražší než Komfort. */
+  /** Násobek denní sazby. Komfort je o 50 % dražší než Základ, Prémium o 20 % dražší než Komfort. */
   multiplier: number
   medicalLimit: number
+  liabilityLimit: number
   /** Limit na jedno pojištěné zavazadlo včetně elektroniky v něm. */
   luggageLimit: number
   /** Kolik zavazadel je v ceně. Jedno na celou smlouvu, nebo jedno na každého cestujícího. */
@@ -88,24 +100,22 @@ export interface Plan {
 }
 
 // Obchodní cíl: dnes se nejvíc prodává nejnižší tarif a firma chce zvýšit průměrnou hodnotu
-// objednávky. Velký cenový skok mezi Základem a Komfortem a malý mezi Komfortem a Prémiem
-// má posunout volbu k vyšším balíčkům. Hlavní cílový segment jsou manažeři.
+// objednávky. Hlavní cílový segment jsou manažeři. Cenový skok mezi balíčky je menší než
+// skok v hodnotě (limity rostou několikanásobně, cena o 50 % a 20 %), aby vyšší balíček
+// působil jako výhodná volba. Velký cenový skok by naopak držel lidi u Základu.
 export const PLANS: Record<PlanId, Plan> = {
   basic: {
     id: 'basic',
     label: 'Základ',
     multiplier: 1,
-    medicalLimit: 2_000_000,
+    medicalLimit: 5_000_000,
+    liabilityLimit: 3_000_000,
     luggageLimit: 15_000,
     includedLuggage: 'perPolicy',
     // Základ s kufry navíc musí být vždy levnější než Komfort, ale ne o moc.
-    // Kufr navíc stojí 1,5násobek ceny dospělého v Základu, takže Základ s kufrem pro
-    // každého vyjde na 70 až 90 % ceny Komfortu. Strop 90 % to hlídá i pro velké skupiny.
-    extraLuggage: {
-      type: 'dailyRate',
-      dailyRateMultiplier: 1.5,
-      cap: { plan: 'comfort', share: 0.9 },
-    },
+    // Kufr navíc stojí polovinu denní ceny dospělého v Základu, takže Základ s kufrem pro
+    // každého vyjde na 80 až 90 % ceny Komfortu. Strop 90 % to hlídá i pro velké skupiny.
+    extraLuggage: { dailyRateMultiplier: 0.5, cap: { plan: 'comfort', share: 0.9 } },
     electronicsItemLimit: null,
     recommended: false,
     shortDescription: 'Léčebné výlohy a jeden kufr do 15 tis. Kč',
@@ -114,11 +124,12 @@ export const PLANS: Record<PlanId, Plan> = {
   comfort: {
     id: 'comfort',
     label: 'Komfort',
-    multiplier: 2.5,
-    medicalLimit: 5_000_000,
+    multiplier: 1.5,
+    medicalLimit: 25_000_000,
+    liabilityLimit: 10_000_000,
     luggageLimit: 50_000,
     includedLuggage: 'perTraveler',
-    extraLuggage: { type: 'fixed', amount: 320 },
+    extraLuggage: { dailyRateMultiplier: 0.5 },
     electronicsItemLimit: 40_000,
     recommended: true,
     shortDescription: 'Pracovní notebook i telefon, odpovědnost a rozšířená asistence',
@@ -127,11 +138,12 @@ export const PLANS: Record<PlanId, Plan> = {
   premium: {
     id: 'premium',
     label: 'Prémium',
-    multiplier: 3,
-    medicalLimit: 10_000_000,
+    multiplier: 1.8,
+    medicalLimit: 250_000_000,
+    liabilityLimit: 25_000_000,
     luggageLimit: 80_000,
     includedLuggage: 'perTraveler',
-    extraLuggage: { type: 'fixed', amount: 380 },
+    extraLuggage: { dailyRateMultiplier: 0.5 },
     electronicsItemLimit: 40_000,
     recommended: false,
     shortDescription: 'Nová cena elektroniky, storno bez lhůty a zpoždění letu',
@@ -180,7 +192,7 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
   },
   {
     label: 'Léčebné výlohy',
-    values: { basic: '2 mil. Kč', comfort: '5 mil. Kč', premium: '10 mil. Kč' },
+    values: { basic: '5 mil. Kč', comfort: '25 mil. Kč', premium: '250 mil. Kč' },
   },
   {
     label: 'Lékařská asistence nonstop',
@@ -195,12 +207,8 @@ export const COVERAGE_ROWS: { label: string; values: Record<PlanId, CoverageValu
     values: { basic: true, comfort: true, premium: true },
   },
   {
-    label: 'Odpovědnost za škodu na zdraví',
-    values: { basic: false, comfort: '1 mil. Kč', premium: '3 mil. Kč' },
-  },
-  {
-    label: 'Odpovědnost za škodu na věci',
-    values: { basic: false, comfort: '500 tis. Kč', premium: '1 mil. Kč' },
+    label: 'Odpovědnost za škodu',
+    values: { basic: '3 mil. Kč', comfort: '10 mil. Kč', premium: '25 mil. Kč' },
   },
   {
     label: 'Trvalé následky úrazu',
@@ -258,7 +266,8 @@ export const ADDONS: Record<AddonId, Addon> = {
     id: 'winterSports',
     label: 'Zimní a rizikové sporty',
     description: 'Lyžování, snowboard, skialpinismus a další sporty na horách',
-    pricing: { type: 'perPersonPerDay', amount: 18 },
+    // Zhruba polovina denní ceny Základu v Evropě. TODO(Milan): ověřit řád ceny na trhu.
+    pricing: { type: 'perPersonPerDay', amount: 20 },
   },
   cancellation: {
     id: 'cancellation',

@@ -4,6 +4,7 @@ import {
   CANCELLATION,
   LUGGAGE,
   FAMILY_DISCOUNT,
+  MEMBER_DISCOUNTS,
   MAX_TRAVELERS,
   MAX_TRIP_DAYS,
   PLANS,
@@ -31,6 +32,8 @@ export interface PriceInput {
   luggagePieces?: number
   /** Údaje o zájezdu. Povinné jen pro připojištění storna. */
   trip?: TripInfo
+  /** Slevy pro pojištěnce VZP a členy Klubu pevného zdraví. Platí za celou smlouvu. */
+  memberDiscounts?: MemberDiscounts
   /** Dnešní datum (YYYY-MM-DD). Kvůli testům jde předat zvenku. */
   today?: string
 }
@@ -40,6 +43,11 @@ export interface TripInfo {
   price: number
   /** Datum zakoupení zájezdu ve formátu YYYY-MM-DD. */
   bookedOn: string
+}
+
+export interface MemberDiscounts {
+  healthInsurer?: boolean
+  healthClub?: boolean
 }
 
 export type PriceLineKind = 'base' | 'discount' | 'addon' | 'included'
@@ -72,6 +80,7 @@ export type ValidationField =
   | 'luggagePieces'
   | 'tripPrice'
   | 'tripBookedOn'
+  | 'memberDiscounts'
 
 export interface ValidationIssue {
   field: ValidationField
@@ -272,6 +281,13 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
     }
   }
 
+  if (input.memberDiscounts?.healthClub && !input.memberDiscounts.healthInsurer) {
+    issues.push({
+      field: 'memberDiscounts',
+      message: 'Sleva pro členy Klubu pevného zdraví platí jen pro pojištěnce VZP.',
+    })
+  }
+
   return issues
 }
 
@@ -333,15 +349,28 @@ function planBase(planId: PlanId, input: PriceInput, days: number) {
 
   const basePremium = lines.reduce((sum, line) => sum + line.amount, 0)
 
-  let discount = 0
+  const discounts: { id: string; label: string; rate: number }[] = []
   if (isFamilyDiscountEligible(input.travelers)) {
-    discount = Math.round(basePremium * FAMILY_DISCOUNT.rate)
+    discounts.push({ id: 'family', ...FAMILY_DISCOUNT })
+  }
+  if (input.memberDiscounts?.healthInsurer) {
+    discounts.push({ id: 'healthInsurer', ...MEMBER_DISCOUNTS.healthInsurer })
+    if (input.memberDiscounts.healthClub) {
+      discounts.push({ id: 'healthClub', ...MEMBER_DISCOUNTS.healthClub })
+    }
+  }
+
+  // Slevy se řetězí, každá se počítá z ceny po předchozích slevách.
+  let discount = 0
+  for (const { id, label, rate } of discounts) {
+    const amount = Math.round((basePremium - discount) * rate)
+    discount += amount
     lines.push({
-      id: 'discount-family',
+      id: `discount-${id}`,
       kind: 'discount',
-      label: FAMILY_DISCOUNT.label,
-      detail: `${Math.round(FAMILY_DISCOUNT.rate * 100)} % ze základního pojistného`,
-      amount: -discount,
+      label,
+      detail: `${Math.round(rate * 100)} % ze základního pojistného`,
+      amount: -amount,
     })
   }
 
@@ -356,26 +385,23 @@ function extraLuggagePrice(
 ): { amount: number; detail: string } {
   const plan = PLANS[input.plan]
   const pricing = plan.extraLuggage
-  if (pricing.type === 'fixed') {
-    return {
-      amount: pricing.amount * pieces,
-      detail: `${formatCzk(pricing.amount)} × ${formatPieces(pieces)}`,
-    }
-  }
-
   const perPiece = Math.round(
     REGIONS[input.region].dailyRate * plan.multiplier * pricing.dailyRateMultiplier * days,
   )
+  const uncapped = perPiece * pieces
+  const uncappedResult = {
+    amount: uncapped,
+    detail: `${formatCzk(perPiece)} × ${formatPieces(pieces)}`,
+  }
+  if (!pricing.cap) return uncappedResult
+
   const capPlan = planBase(pricing.cap.plan, input, days)
   // Zaokrouhlení dolů, aby strop nikdy nepřekročil daný podíl.
   const cap = Math.max(
     0,
     Math.floor((capPlan.basePremium - capPlan.discount) * pricing.cap.share) - netBase,
   )
-  const uncapped = perPiece * pieces
-  if (uncapped <= cap) {
-    return { amount: uncapped, detail: `${formatCzk(perPiece)} × ${formatPieces(pieces)}` }
-  }
+  if (uncapped <= cap) return uncappedResult
   return {
     amount: cap,
     detail: `${formatPieces(pieces)}, doplatek nejvýše do ${Math.round(pricing.cap.share * 100)} % ceny balíčku ${PLANS[pricing.cap.plan].label}`,
