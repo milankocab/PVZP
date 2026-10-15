@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-slate-900">
+    <div className="flex min-h-screen flex-col text-ink">
       {/* HashRouter používá # pro stránky. Odkaz #obsah by přepnul stránku, proto fokus řeším ručně. */}
       <a
         href="#obsah"
@@ -15,7 +15,7 @@ export function Layout({ children }: { children: ReactNode }) {
       >
         Přeskočit na obsah
       </a>
-      <header className="border-b border-slate-200">
+      <header className="border-b border-slate-200/80 bg-white">
         <nav
           aria-label="Hlavní navigace"
           className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"
@@ -59,8 +59,12 @@ export function Layout({ children }: { children: ReactNode }) {
       <main id="obsah" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <p className="mx-auto max-w-5xl px-4 py-6 text-sm text-slate-700">
+      {/*
+        Na mobilu v sjednání překrývá spodek stránky přilepená lišta s cenou. Lišta zapisuje svou
+        výšku do --price-bar-h, patička o ni odsadí text, aby šel doscrollovat nad lištu.
+      */}
+      <footer className="border-t border-slate-200 bg-white pb-[calc(var(--price-bar-h,0px)+1.5rem)] lg:pb-6">
+        <p className="mx-auto max-w-5xl px-4 pt-6 text-sm text-slate-700">
           Koncept vytvořený jako ukázka produktové práce. Nejde o produkt žádné pojišťovny, ceny i
           podmínky jsou smyšlené.
         </p>

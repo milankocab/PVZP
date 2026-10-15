@@ -1,17 +1,152 @@
 @import 'tailwindcss';
 
+/*
+ * Barvy vychází z loga Odjezd (petrolejová a oranžová). Petrolejovou jsem zesvětlil do svěžejšího
+ * tyrkysu a doplnil pomocné barvy pro ikony, aby každá oblast krytí měla vlastní barvu.
+ * Text na brand-600 a tmavších má proti bílé kontrast aspoň 4,5:1 (WCAG AA).
+ */
 @theme {
-  --color-brand-50: #eef7f6;
-  --color-brand-100: #d5ecea;
-  --color-brand-600: #136f75;
-  --color-brand-700: #0f5257;
-  --color-brand-800: #0b3c40;
-  --color-accent-500: #e0892c;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-brand-50: #ecfbf8;
+  --color-brand-100: #d0f4ec;
+  --color-brand-200: #a3e8da;
+  --color-brand-300: #63d5c2;
+  --color-brand-400: #2bbca8;
+  --color-brand-500: #12a091;
+  --color-brand-600: #0b7a70;
+  --color-brand-700: #0a6460;
+  --color-brand-800: #0b4b4d;
+  --color-brand-900: #0a3437;
+  --color-accent-50: #fff4ec;
+  --color-accent-100: #ffe3cf;
+  --color-accent-400: #ff9a52;
+  --color-accent-500: #f47c2c;
+  --color-accent-700: #b4500f;
+  --color-ink: #10292d;
+  --color-canvas: #f4f8f7;
+  --font-sans:
+    'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --animate-pop: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-num-up: num-up 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-num-down: num-down 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade: fade 300ms ease-out both;
+  --animate-draw: draw 600ms 150ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  --animate-burst: burst 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes num-up {
+    0% {
+      transform: translateY(60%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes num-down {
+    0% {
+      transform: translateY(-60%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes rise {
+    0% {
+      transform: translateY(14px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fade {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes draw {
+    0% {
+      stroke-dashoffset: 48;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes burst {
+    0% {
+      transform: translate(0, 0) scale(0.4);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--dx), var(--dy)) scale(1);
+      opacity: 0;
+    }
+  }
 }
 
-:focus-visible {
-  /* Tmavý obrys má kontrast aspoň 3:1 i na světlých plochách (zvolená karta, oranžová nabídka). */
-  outline: 3px solid var(--color-brand-800);
-  outline-offset: 2px;
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* V base vrstvě, aby šel obrys u konkrétního prvku vypnout utilitou (např. nadpis po přechodu). */
+@layer base {
+  :focus-visible {
+    /* Tmavý obrys má kontrast aspoň 3:1 i na světlých plochách (zvolená karta, oranžová nabídka). */
+    outline: 3px solid var(--color-brand-800);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Safari na iPhonu dává poli s datem pevnou minimální šířku, takže v úzkém sloupci přetéká
+ * z obrazovky. Zrušení vlastního vzhledu a min-width to opraví.
+ */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  display: block;
+}
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
+/* Vodorovný posuvník karet balíčků. Lišta se schová, ovládá se prstem, šipkami nebo záložkami. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
