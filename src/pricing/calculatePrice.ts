@@ -235,7 +235,7 @@ export function validatePriceInput(input: PriceInput): ValidationIssue[] {
   }
 
   if (!(input.plan in PLANS)) {
-    issues.push({ field: 'plan', message: 'Vyberte variantu pojištění.' })
+    issues.push({ field: 'plan', message: 'Vyberte balíček.' })
   }
 
   if (input.addons.some((addon) => !(addon in ADDONS))) {
@@ -369,12 +369,25 @@ function planBase(planId: PlanId, input: PriceInput, days: number) {
       id: `discount-${id}`,
       kind: 'discount',
       label,
-      detail: `${Math.round(rate * 100)} % ze základního pojistného`,
+      detail:
+        discount === amount
+          ? `${Math.round(rate * 100)} % ze základního pojistného`
+          : `${Math.round(rate * 100)} % z ceny po předchozích slevách`,
       amount: -amount,
     })
   }
 
   return { lines, basePremium, discount }
+}
+
+function luggagePiecePrice(planId: PlanId, input: PriceInput, days: number): number {
+  const plan = PLANS[planId]
+  return Math.round(
+    REGIONS[input.region].dailyRate *
+      plan.multiplier *
+      plan.extraLuggage.dailyRateMultiplier *
+      days,
+  )
 }
 
 function extraLuggagePrice(
@@ -383,11 +396,8 @@ function extraLuggagePrice(
   pieces: number,
   netBase: number,
 ): { amount: number; detail: string } {
-  const plan = PLANS[input.plan]
-  const pricing = plan.extraLuggage
-  const perPiece = Math.round(
-    REGIONS[input.region].dailyRate * plan.multiplier * pricing.dailyRateMultiplier * days,
-  )
+  const pricing = PLANS[input.plan].extraLuggage
+  const perPiece = luggagePiecePrice(input.plan, input, days)
   const uncapped = perPiece * pieces
   const uncappedResult = {
     amount: uncapped,
@@ -395,16 +405,24 @@ function extraLuggagePrice(
   }
   if (!pricing.cap) return uncappedResult
 
-  const capPlan = planBase(pricing.cap.plan, input, days)
-  // Zaokrouhlení dolů, aby strop nikdy nepřekročil daný podíl.
-  const cap = Math.max(
+  // Strop se počítá z ceny vyššího balíčku se stejným počtem kufrů.
+  // Jinak by kufry nad počet cestujících byly v Základu zdarma.
+  const capPlanId = pricing.cap.plan
+  const capPlan = planBase(capPlanId, input, days)
+  const capPlanExtraPieces = Math.max(
     0,
-    Math.floor((capPlan.basePremium - capPlan.discount) * pricing.cap.share) - netBase,
+    effectiveLuggagePieces(input) - includedLuggagePieces(capPlanId, input.travelers),
   )
+  const capPlanTotal =
+    capPlan.basePremium -
+    capPlan.discount +
+    luggagePiecePrice(capPlanId, input, days) * capPlanExtraPieces
+  // Zaokrouhlení dolů, aby strop nikdy nepřekročil daný podíl.
+  const cap = Math.max(0, Math.floor(capPlanTotal * pricing.cap.share) - netBase)
   if (uncapped <= cap) return uncappedResult
   return {
     amount: cap,
-    detail: `${formatPieces(pieces)}, doplatek nejvýše do ${Math.round(pricing.cap.share * 100)} % ceny balíčku ${PLANS[pricing.cap.plan].label}`,
+    detail: `${formatPieces(pieces)}, doplatek nejvýše do ${Math.round(pricing.cap.share * 100)} % ceny balíčku ${PLANS[capPlanId].label}`,
   }
 }
 
@@ -444,7 +462,7 @@ export function calculatePrice(input: PriceInput): PriceBreakdown {
         id: `included-${addonId}`,
         kind: 'included',
         label: addon.label,
-        detail: `V ceně varianty ${plan.label}`,
+        detail: `V ceně balíčku ${plan.label}`,
         amount: 0,
       })
       continue

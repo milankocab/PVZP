@@ -60,10 +60,10 @@ Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=mana
 
 | | Návštěvy | Objednávky | Konverze | AOV | Tržba na návštěvu |
 | --- | --- | --- | --- | --- | --- |
-| A celkem | 28 000 | 2 800 | 10,0 % | 290 Kč | 29,0 Kč |
-| B celkem | 28 000 | 2 716 | 9,7 % | 335 Kč | 32,5 Kč |
-| A manažeři | 4 000 | 440 | 11,0 % | 360 Kč | 39,6 Kč |
-| B manažeři | 4 000 | 436 | 10,9 % | 420 Kč | 45,8 Kč |
+| A celkem | 55 000 | 5 500 | 10,0 % | 290 Kč | 29,0 Kč |
+| B celkem | 55 000 | 5 335 | 9,7 % | 335 Kč | 32,5 Kč |
+| A manažeři | 8 000 | 880 | 11,0 % | 360 Kč | 39,6 Kč |
+| B manažeři | 8 000 | 872 | 10,9 % | 420 Kč | 45,8 Kč |
 
 AOV v B je o 15 % vyšší. Konverze klesla o 3 % relativně, tedy pod hranicí 5 %. Tržba na návštěvu vzrostla o 12 %. Pokud je rozdíl v AOV statisticky významný, B vyhrává. U manažerů vychází výsledek podobně, ale segment je menší, takže je méně jistý.
 
@@ -88,7 +88,7 @@ Prvky, které zobrazují osobní údaje (pole se jménem a datem narození, sezn
 1. Založím si účet na [posthog.com](https://posthog.com) a zvolím EU cloud.
 2. V Project settings zkopíruji Project API key (začíná `phc_`). Klíč je veřejný, patří do kódu stránky, nejde o tajemství.
 3. Lokálně ho vložím do `.env.local` jako `VITE_POSTHOG_KEY` (vzor je v `.env.example`).
-4. Pro GitHub Pages ho uložím jako repository variable `VITE_POSTHOG_KEY`. Workflow ho předá buildu. Workflow připravím ve fázi 6.
+4. Pro GitHub Pages ho uložím jako repository variable `VITE_POSTHOG_KEY`. Workflow ho předá buildu, viz Nasazení níže.
 5. V PostHogu je pak v Activity vidět každý klik. Funnel A proti B udělám v Product analytics, Funnels, s rozdělením podle vlastnosti `variant`. Heatmapa kliků je v Toolbaru.
 
 Bez klíče se PostHog vůbec nenačte ani nezabalí do buildu.
@@ -100,3 +100,21 @@ Měření bez cookies je pořád zpracování dat o návštěvě. Jestli na ostr
 GA4 je nástroj pro ostrý provoz popsaný výše. V prototypu je volitelný. Bez proměnné `VITE_GA4_ID` se nenačte a eventy se ukládají jen lokálně pro `#/vysledky`. GA4 ukládá cookies. Před ostrým provozem je potřeba souhlas s cookies, jeho řešení je nutné potvrdit s legal týmem.
 
 Do analytiky nikdy nejdou jména, e-maily, data narození ani jiný obsah formulářů.
+
+## Nasazení na GitHub Pages
+
+Workflow je v `.github/workflows/deploy.yml`. Po pushi do `main` spustí lint, testy a build a nasadí složku `dist` na GitHub Pages. Jde ho spustit i ručně v záložce Actions (Run workflow).
+
+1. Repozitář se musí jmenovat `cestovni-pojisteni-prototyp`, protože na tento název je nastavený `base` ve `vite.config.ts`. Jiný název znamená změnit `base`.
+2. V Settings, Pages nastavím Source na GitHub Actions.
+3. V Settings, Secrets and variables, Actions, záložka Variables, založím repository variables. Všechny jsou volitelné.
+
+| Proměnná | Hodnota |
+| --- | --- |
+| `VITE_POSTHOG_KEY` | Project API key z PostHogu (`phc_…`) |
+| `VITE_POSTHOG_HOST` | Jen pro US účet `https://us.i.posthog.com`. Bez ní se použije EU. |
+| `VITE_GA4_ID` | Measurement ID z GA4 (`G-…`) |
+
+Proměnné jsou veřejné. Vite je vloží do JavaScriptu stránky, takže je vidí každý návštěvník. Proto jsou ve Variables, ne v Secrets. Nic tajného do nich nepatří.
+
+Po změně proměnné je potřeba workflow spustit znovu, hodnoty se vkládají při buildu.

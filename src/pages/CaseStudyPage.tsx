@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PlanPickerMock } from '../casestudy/PlanPickerMock'
+import { YesNoMark } from '../purchase/components/ui'
 import { SampleSizeCalculator } from '../casestudy/SampleSizeCalculator'
 import { COVERAGE_ROWS, PLAN_ORDER, PLANS, REGIONS, formatCzk } from '../pricing'
-
-// Odkaz na repozitář s README. Doplní Milan, dokud je prázdný, odkaz se nezobrazí.
-const REPO_URL = ''
 
 const SECTIONS = [
   { id: 'problem', title: 'Problém' },
@@ -69,8 +67,8 @@ function Placeholder({ children }: { children: ReactNode }) {
 }
 
 function CoverageCell({ value }: { value: string | boolean }) {
-  if (value === true) return <span aria-label="Ano">✓</span>
-  if (value === false) return <span aria-label="Ne">–</span>
+  if (value === true) return <YesNoMark yes />
+  if (value === false) return <YesNoMark yes={false} />
   return <>{value}</>
 }
 
@@ -148,8 +146,8 @@ export function CaseStudyPage() {
       {/* 2. Problém */}
       <Section id="problem">
         <p>
-          Cestovní pojištění si lidé kupují krátce před cestou a většinou na telefonu. Je to
-          povinnost navíc, ne nákup, na který se těší. Každý krok, kterému nerozumí, je důvod
+          Předpokládám, že si lidé cestovní pojištění kupují krátce před cestou. Pro většinu z nich
+          je to povinnost navíc, ne nákup, na který se těší. Každý krok, kterému nerozumí, je důvod
           odejít.
         </p>
         <H3>Kde podle mě lidé odpadají</H3>
@@ -181,13 +179,15 @@ export function CaseStudyPage() {
         </p>
         <p>
           Předpokládáme, že data smyšlené firmy ukazují růst segmentu manažerů. Podíl smluv, u
-          kterých klient při škodě nahlásil elektroniku nad 30 000 Kč, vzrostl za rok z 12 % na 18
-          %. Drahá pracovní elektronika je nejlepší dostupný signál, že jde o manažera. Proto jsem
-          přidal limit na zavazadla a elektroniku. Je to pro manažery důvod zvolit vyšší balíček.
+          kterých klient při škodě nahlásil elektroniku nad 30&nbsp;000&nbsp;Kč, vzrostl za rok z
+          12&nbsp;% na 18&nbsp;%. Drahá pracovní elektronika je nejlepší dostupný signál, že jde o
+          manažera. Proto jsem přidal limit na zavazadla a elektroniku. Je to pro manažery důvod
+          zvolit vyšší balíček.
         </p>
         <p>
-          Předpokládáme také, že 78 % návštěv funnelu přichází z telefonu a vzniká na něm 70 %
-          smluv. Konverze na telefonu je 9 %, na desktopu 13,5 %. Návrh proto začíná u mobilu.
+          Předpokládáme také, že 78&nbsp;% návštěv funnelu přichází z telefonu a vzniká na něm
+          70&nbsp;% smluv. Konverze na telefonu je 9&nbsp;%, na desktopu 13,5&nbsp;%. Návrh proto
+          začíná u mobilu.
         </p>
 
         <div className="overflow-x-auto">
@@ -234,9 +234,9 @@ export function CaseStudyPage() {
           </table>
         </div>
         <p>
-          Komfort je o 50 % dražší než Základ, limity ale rostou několikanásobně. Prémium je o
-          dalších 20 % dražší. Vyšší balíček tak působí jako výhodná volba. Velký cenový skok by
-          naopak držel lidi u Základu, a to je dnešní problém.
+          Komfort je o 50&nbsp;% dražší než Základ, limity ale rostou několikanásobně. Prémium je o
+          dalších 20&nbsp;% dražší. Vyšší balíček tak působí jako výhodná volba. Velký cenový skok
+          by naopak držel lidi u Základu, a to je dnešní problém.
         </p>
       </Section>
 
@@ -270,7 +270,7 @@ export function CaseStudyPage() {
         <H3>Hypotéza 1, ověřuje ji A/B test</H3>
         <Quote>
           Pokud bude Komfort předvybraný, zvýší se průměrná hodnota objednávky (AOV), aniž by
-          konverze z funnel_start na purchase_simulated relativně klesla o víc než 5 %, protože
+          konverze z funnel_start na purchase_simulated relativně klesla o víc než 5&nbsp;%, protože
           většina lidí výchozí volbu nemění a Komfort je dnes vybíraný méně, než odpovídá jeho
           přínosu.
         </Quote>
@@ -282,7 +282,7 @@ export function CaseStudyPage() {
         <p>
           Přínosy pro manažery dostanou obě varianty. A/B test proto nemá s čím srovnávat. Hypotézu
           2 ověřím srovnáním před spuštěním a po něm. Sleduji podíl smluv od manažerů a dlouhodobě
-          podíl smluv se škodou na elektronice nad 30 000 Kč, dnes 18 %.
+          podíl smluv se škodou na elektronice nad 30&nbsp;000&nbsp;Kč, dnes 18&nbsp;%.
         </p>
         <p>
           Srovnání před a po ovlivní sezóna a kampaně. Proto srovnávám se stejným obdobím loni.
@@ -321,7 +321,7 @@ export function CaseStudyPage() {
           <li>
             Konverze z <code className="rounded bg-slate-100 px-1">funnel_start</code> na{' '}
             <code className="rounded bg-slate-100 px-1">purchase_simulated</code> nesmí relativně
-            klesnout o víc než 5 %.
+            klesnout o víc než 5&nbsp;%.
           </li>
           <li>Tržba na návštěvu nesmí klesnout.</li>
         </Bullets>
@@ -330,26 +330,26 @@ export function CaseStudyPage() {
           balíčky. Firma by pak vydělala méně.
         </p>
 
-        <H3>Proč hranice 5 %</H3>
+        <H3>Proč hranice 5&nbsp;%</H3>
         <p>
-          Předpokládáme, že data smyšlené firmy ukazují konverzi 10 %, týdenní kolísání konverze
-          zhruba 3 % relativně a 20 000 návštěv funnelu týdně. Simulace nového cenového modelu
-          slibuje růst AOV o 10 %.
+          Předpokládáme, že data smyšlené firmy ukazují konverzi 10&nbsp;%, týdenní kolísání
+          konverze zhruba 3&nbsp;% relativně a 20&nbsp;000 návštěv funnelu týdně. Podle simulace
+          nového cenového modelu čekám růst AOV o 10&nbsp;%.
         </p>
         <Bullets>
           <li>
-            <strong>Tržba nesmí klesnout.</strong> Při růstu AOV o 10 % se tržba vyrovná při poklesu
-            konverze o 9,1 %. Hranice 5 % nechává rezervu. I v nejhorším povoleném případě vzroste
-            tržba na návštěvu o 4,5 %.
+            <strong>Tržba nesmí klesnout.</strong> Při růstu AOV o 10&nbsp;% se tržba vyrovná při
+            poklesu konverze o 9,1&nbsp;%. Hranice 5&nbsp;% nechává rezervu. I v nejhorším povoleném
+            případě vzroste tržba na návštěvu o 4,5&nbsp;%.
           </li>
           <li>
-            <strong>Hranice musí být nad běžným kolísáním.</strong> Konverze kolísá o 3 % i bez
-            změny. Hranice 2 % by byla pod tímto šumem a test by končil falešnými poplachy.
+            <strong>Hranice musí být nad běžným kolísáním.</strong> Konverze kolísá o 3&nbsp;% i bez
+            změny. Hranice 2&nbsp;% by byla pod tímto šumem a test by končil falešnými poplachy.
           </li>
           <li>
-            <strong>Test musí jít změřit v rozumné době.</strong> Pokles o 5 % odhalím zhruba za 55
-            000 návštěv na variantu, tedy za 6 týdnů. Pokles o 2 % by potřeboval 350 000 návštěv na
-            variantu, tedy 35 týdnů.
+            <strong>Test musí jít změřit v rozumné době.</strong> Pokles o 5&nbsp;% odhalím zhruba
+            za 55&nbsp;000 návštěv na variantu, tedy za 6 týdnů. Pokles o 2&nbsp;% by potřeboval
+            350&nbsp;000 návštěv na variantu, tedy 35 týdnů.
           </li>
         </Bullets>
 
@@ -365,8 +365,8 @@ export function CaseStudyPage() {
         <H3>Délka testu a kalkulačka vzorku</H3>
         <p>
           Délku testu určuje metrika, která potřebuje víc dat. Při výchozích hodnotách stačí na AOV
-          asi 7 500 návštěv na variantu. Ochranná konverze jich ale potřebuje 55 000. Test proto
-          poběží 6 týdnů. Zkuste si čísla změnit.
+          asi 7&nbsp;500 návštěv na variantu. Ochranná konverze jich ale potřebuje 55&nbsp;000. Test
+          proto poběží 6 týdnů. Zkuste si čísla změnit.
         </p>
         <SampleSizeCalculator />
 
@@ -377,8 +377,8 @@ export function CaseStudyPage() {
             i když jedna varianta zrovna vede.
           </li>
           <li>
-            Dřív ho zastavím jen tehdy, když konverze nebo tržba na návštěvu spadne pod ochrannou
-            hranici, nebo když návštěvy nejsou rozdělené zhruba 50 na 50. To by znamenalo chybu v
+            Dřív ho zastavím jen ve dvou případech. Konverze nebo tržba na návštěvu spadne pod
+            ochrannou hranici. Nebo návštěvy nejsou rozdělené zhruba 50 na 50, což znamená chybu v
             přidělování.
           </li>
           <li>
@@ -389,16 +389,7 @@ export function CaseStudyPage() {
         </Bullets>
         <p>
           Jak data vyhodnotím v praxi, popisuji v sekci 6. Podrobný postup s GA4, exportem do
-          BigQuery a výpočtem významnosti je v README
-          {REPO_URL && (
-            <>
-              {' '}
-              <a href={REPO_URL} className="text-brand-700 underline underline-offset-4">
-                v repozitáři
-              </a>
-            </>
-          )}
-          .
+          BigQuery a výpočtem významnosti je v README.
         </p>
 
         <H3>Plán testů</H3>
@@ -490,7 +481,7 @@ export function CaseStudyPage() {
           </li>
           <li>
             <strong>Google Analytics 4.</strong> Sbírá eventy z aplikace. Zaregistruji v něm vlastní
-            dimenze varianta, segment a balíček a propojím ho s BigQuery.
+            dimenze varianta, segment, zdroj segmentu, účel cesty a balíček. Propojím ho s BigQuery.
           </li>
           <li>
             <strong>BigQuery.</strong> Uchovává každou objednávku zvlášť. Bez toho nejde spočítat

@@ -30,17 +30,26 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
           <ul className="flex gap-4 text-sm">
             <li>
-              <Link to="/" className="underline-offset-4 hover:underline">
+              <Link
+                to="/"
+                className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+              >
                 Case study
               </Link>
             </li>
             <li>
-              <Link to="/sjednani" className="underline-offset-4 hover:underline">
+              <Link
+                to="/sjednani"
+                className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+              >
                 Prototyp
               </Link>
             </li>
             <li>
-              <Link to="/vysledky" className="underline-offset-4 hover:underline">
+              <Link
+                to="/vysledky"
+                className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+              >
                 Měření
               </Link>
             </li>

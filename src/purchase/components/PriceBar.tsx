@@ -59,13 +59,13 @@ export function MobilePriceBar({ price, fromPrice, continueLabel, onContinue }: 
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
           <p className="text-xs text-slate-600">Cena celkem</p>
-          <p className="text-xl font-bold text-slate-900" aria-live="polite">
+          <p className="text-xl font-bold whitespace-nowrap text-slate-900" aria-live="polite">
             <PriceValue price={price} fromPrice={fromPrice} />
           </p>
           {price && (
             <button
               type="button"
-              className="text-sm font-medium text-brand-700 underline underline-offset-2"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-brand-700 underline underline-offset-2"
               aria-expanded={open}
               aria-controls="mobile-breakdown"
               onClick={() => setOpen((value) => !value)}

@@ -6,7 +6,7 @@ import {
   tryCalculatePrice,
   type PlanId,
 } from '../../pricing'
-import { ErrorText } from '../components/ui'
+import { ErrorText, YesNoMark } from '../components/ui'
 import { toBasePriceInput, type StepProps } from '../stepProps'
 
 // Přínosy na kartách. Nahoře je to, co řeší manažeři s pracovní elektronikou.
@@ -32,8 +32,8 @@ const HIGHLIGHTS: Record<PlanId, string[]> = {
 }
 
 function CoverageValueCell({ value }: { value: string | boolean }) {
-  if (value === true) return <span aria-label="Ano">✓</span>
-  if (value === false) return <span aria-label="Ne">–</span>
+  if (value === true) return <YesNoMark yes />
+  if (value === false) return <YesNoMark yes={false} />
   return <>{value}</>
 }
 
@@ -50,7 +50,7 @@ export function StepPlan({ state, update, errors }: StepProps) {
             return (
               <label
                 key={id}
-                className={`relative block cursor-pointer rounded-xl border-2 bg-white p-4 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-accent-500 ${
+                className={`relative block cursor-pointer rounded-xl border-2 bg-white p-4 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-brand-800 has-focus-visible:outline-offset-2 ${
                   errors.plan ? 'border-red-700' : 'border-slate-300'
                 }`}
               >
@@ -105,7 +105,7 @@ export function StepPlan({ state, update, errors }: StepProps) {
         <summary className="min-h-12 cursor-pointer content-center font-semibold text-brand-700">
           Porovnat všechna krytí
         </summary>
-        <table className="mt-3 w-full table-fixed text-sm">
+        <table className="mt-3 w-full table-fixed text-sm break-words hyphens-auto">
           <caption className="sr-only">Srovnání krytí balíčků</caption>
           <thead>
             <tr>

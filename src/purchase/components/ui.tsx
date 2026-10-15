@@ -3,9 +3,19 @@ import type { InputHTMLAttributes, ReactNode } from 'react'
 export function ErrorText({ id, message }: { id: string; message?: string }) {
   if (!message) return null
   return (
-    <p id={id} className="mt-1 text-sm font-medium text-red-700">
+    <p id={id} tabIndex={-1} className="mt-1 text-sm font-medium text-red-700">
       {message}
     </p>
+  )
+}
+
+/** Fajfka nebo pomlčka v tabulce. Čtečka přečte „Ano“ nebo „Ne“, ne název znaku. */
+export function YesNoMark({ yes }: { yes: boolean }) {
+  return (
+    <>
+      <span aria-hidden="true">{yes ? '✓' : '–'}</span>
+      <span className="sr-only">{yes ? 'Ano' : 'Ne'}</span>
+    </>
   )
 }
 
@@ -83,7 +93,7 @@ export function ChoiceCards<T extends string>({
         {options.map((option) => (
           <label
             key={option.value}
-            className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border-2 bg-white p-3 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-accent-500 ${
+            className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border-2 bg-white p-3 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-brand-800 has-focus-visible:outline-offset-2 ${
               error ? 'border-red-700' : 'border-slate-300'
             }`}
           >

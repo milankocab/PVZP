@@ -98,7 +98,7 @@ export function SampleSizeCalculator() {
           ).map(([id, label]) => (
             <label
               key={id}
-              className="flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-300 px-3 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-accent-500"
+              className="flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-300 px-3 has-checked:border-brand-700 has-checked:bg-brand-50 has-focus-visible:outline-3 has-focus-visible:outline-brand-800 has-focus-visible:outline-offset-2"
             >
               <input
                 type="radio"

@@ -22,6 +22,9 @@ function InfoTip({ label, children }: { label: string; children: ReactNode }) {
         aria-controls={id}
         onClick={() => setOpen((value) => !value)}
         onBlur={() => setOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setOpen(false)
+        }}
         className="flex size-11 items-center justify-center rounded-full"
       >
         <span

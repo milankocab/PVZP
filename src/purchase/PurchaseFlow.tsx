@@ -261,10 +261,8 @@ export function PurchaseFlow({
     )
   }
 
-  const continueLabel =
-    step.id === 'payment'
-      ? `Zaplatit (simulace)${price ? ` ${formatCzk(price.total)}` : ''}`
-      : 'Pokračovat'
+  // Cena je vidět hned vedle tlačítka, proto ji popisek neopakuje. Na 375 px by se nevešla.
+  const continueLabel = step.id === 'payment' ? 'Zaplatit (simulace)' : 'Pokračovat'
   const stepProps = { state, update, errors }
   const travelerCount = countTravelers(state.travelers)
 

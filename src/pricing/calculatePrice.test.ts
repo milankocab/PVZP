@@ -325,13 +325,31 @@ describe('zavazadla', () => {
     expect(price.total).toBe(665)
   })
 
-  it('strop 90 % ceny Komfortu platí i pro velkou skupinu s mnoha kufry', () => {
+  it('strop 90 % ceny Komfortu platí pro velkou skupinu s kufrem pro každého', () => {
     const travelers = { adult: 6, child: 0, senior: 0 }
     const price = calculatePrice(
-      input({ return: WEEK, plan: 'basic', travelers, luggagePieces: 12 }),
+      input({ return: WEEK, plan: 'basic', travelers, luggagePieces: 6 }),
     )
     // Komfort 57 × 6 × 7 = 2394, 90 % = 2154,6. Základ 1596, doplatek nejvýše 558.
     expect(price.total).toBe(2154)
+  })
+
+  it('kufry nad počet cestujících nejsou v Základu zdarma', () => {
+    const three = calculatePrice(
+      input({ return: WEEK, plan: 'basic', travelers: two, luggagePieces: 3 }),
+    )
+    const four = calculatePrice(
+      input({ return: WEEK, plan: 'basic', travelers: two, luggagePieces: 4 }),
+    )
+    // Základ 532 + 2 × 133 = 798. Strop z Komfortu se 3 kufry (798 + 200) × 0,9 se neuplatní.
+    expect(three.total).toBe(798)
+    // Základ 532 + 3 × 133 = 931. Komfort se 4 kufry stojí 798 + 2 × 200 = 1198.
+    expect(four.total).toBe(931)
+    const comfortFour = calculatePrice(
+      input({ return: WEEK, plan: 'comfort', travelers: two, luggagePieces: 4 }),
+    )
+    expect(comfortFour.total).toBe(1198)
+    expect(four.total).toBeLessThan(comfortFour.total)
   })
 
   it('méně kufrů než cestujících nesnižuje cenu', () => {

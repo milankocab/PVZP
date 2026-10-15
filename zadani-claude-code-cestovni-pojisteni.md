@@ -24,7 +24,7 @@ Cílem tohoto repozitáře je **funkční prototyp sjednání cestovního pojiš
 | Odpovědnost za škodu | 3 mil. Kč | 10 mil. Kč | 25 mil. Kč |
 | Limit zavazadel a elektroniky (na jeden kufr) | 15 000 Kč | 50 000 Kč | 80 000 Kč |
 | Kufry v ceně | 1 na smlouvu | 1 na osobu | 1 na osobu |
-| Další kufr (připojištění, za den) | polovina denní ceny dospělého, nejvýše do 90 % ceny Komfortu | polovina denní ceny dospělého | polovina denní ceny dospělého |
+| Další kufr (připojištění, za den) | polovina denní ceny dospělého, nejvýše do 90 % ceny Komfortu se stejným počtem kufrů | polovina denní ceny dospělého | polovina denní ceny dospělého |
 | Limit na jeden kus elektroniky | do limitu kufru | 40 000 Kč | 40 000 Kč |
 | Firemní elektronika | ne | ne | ano, vlastnictví se dokládá až při škodě |
 | Cena za den, dospělý, Evropa | 38 Kč | 57 Kč (+50 %) | 68 Kč (+20 %) |
@@ -62,7 +62,7 @@ Při sjednání se na firmu neptám, protože by to nikdo nevyplňoval. Krytí v
 
 Základ s jedním kufrem na smlouvu je levná vstupní varianta, například pro krátkou cestu s jedním kufrem. Když cestuje víc lidí s jedním kufrem, aplikace je upozorní, že limit platí na kufr, a nabídne další kufr nebo vyšší balíček.
 
-Základ s kufrem pro každého je vždy levnější než Komfort, ale ne o moc. Vychází na 80 až 90 % ceny Komfortu. Kufr navíc v Základu proto stojí polovinu denní ceny dospělého za každý den cesty a doplatek nikdy nepřekročí 90 % ceny Komfortu. Pevná cena by nefungovala, protože cena balíčků roste s délkou cesty a oblastí. U krátké cesty by kufr navíc vyšel dráž než celé pojištění, u dlouhé by byl rozdíl příliš velký.
+Základ s kufrem pro každého je vždy levnější než Komfort, ale ne o moc. Vychází na 80 až 90 % ceny Komfortu. Kufr navíc v Základu proto stojí polovinu denní ceny dospělého za každý den cesty a doplatek nikdy nepřekročí 90 % ceny Komfortu se stejným počtem kufrů. Strop se počítá ze stejného počtu kufrů, jinak by kufry nad počet cestujících byly v Základu zdarma. Pevná cena by nefungovala, protože cena balíčků roste s délkou cesty a oblastí. U krátké cesty by kufr navíc vyšel dráž než celé pojištění, u dlouhé by byl rozdíl příliš velký.
 
 ### Platba na mobilu
 
@@ -155,7 +155,7 @@ Jeden postup pro obě varianty testu, navržený nejdřív pro mobil. Varianty s
 5. **Shrnutí a souhlasy.**
 6. **Platba (simulace) a potvrzení.** Apple Pay, Google Pay a karta, vše jen jako simulace.
 
-- **Přilepená lišta s průběžnou cenou** (na mobilu dole) je vidět od chvíle, kdy jsou vyplněné údaje kroku 1. Dokud není vybraný balíček, ukazuje „od“ cenu Základu.
+- **Přilepená lišta s průběžnou cenou** (na mobilu dole) je vidět od začátku, protože nese hlavní tlačítko „Pokračovat“. Cena se v ní ukáže od chvíle, kdy jsou vyplněné údaje kroku 1. Do té doby lišta ukazuje „Vyplňte cestu“. Dokud není vybraný balíček, ukazuje „od“ cenu Základu.
 - **Nabídka vyššího balíčku před platbou** je připravená, ale vypnutá. Je to předmět testu 2. V prototypu jde zapnout parametrem `?upsell=1`.
 
 ## Fáze 3: A/B test a hypotézy

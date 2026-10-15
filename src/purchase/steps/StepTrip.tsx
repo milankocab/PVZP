@@ -17,9 +17,11 @@ export function StepTrip({ state, update, errors }: StepProps) {
           update({
             ...sample,
             travelerDetails: resizeTravelerDetails(state.travelerDetails, sample.travelers!),
+            luggagePieces: null,
+            luggageSharedConfirmed: false,
           })
         }}
-        className="text-sm font-medium text-brand-700 underline underline-offset-2"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-brand-700 underline underline-offset-2"
       >
         Vyplnit ukázkovou cestu
       </button>
@@ -85,6 +87,8 @@ export function StepTrip({ state, update, errors }: StepProps) {
                 update({
                   travelers,
                   travelerDetails: resizeTravelerDetails(state.travelerDetails, travelers),
+                  // Počet kufrů se odvíjí od cestujících. Po změně začínáme znovu od kufrů v ceně.
+                  luggagePieces: null,
                   luggageSharedConfirmed: false,
                 })
               }}
