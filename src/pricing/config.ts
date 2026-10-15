@@ -308,13 +308,13 @@ export const SPORT_ACTIVITIES: Record<
   SportId,
   { label: string; examples: string; risky: boolean }
 > = {
-  ski: { label: 'Lyže a snowboard', examples: 'sjezd, běžky, skialpy', risky: true },
+  ski: { label: 'Lyže a snowboard', examples: 'sjezd, běžky, skialpinismus', risky: true },
   climbing: { label: 'Lezení a vysoké hory', examples: 'ferraty, horolezectví', risky: true },
   diving: { label: 'Potápění', examples: 's přístrojem', risky: true },
   water: { label: 'Divoká voda a vítr', examples: 'rafting, surf, kite, wakeboard', risky: true },
   mtb: { label: 'Horské kolo', examples: 'enduro, downhill', risky: true },
   air: { label: 'Létání a skoky', examples: 'paragliding, bungee', risky: true },
-  motor: { label: 'Motorové sporty', examples: 'čtyřkolka, skútr', risky: true },
+  motor: { label: 'Motorové sporty', examples: 'čtyřkolka, sněžný skútr', risky: true },
   other: { label: 'Jiné sporty', examples: 'plavání, turistika, kolo, běh', risky: false },
 }
 

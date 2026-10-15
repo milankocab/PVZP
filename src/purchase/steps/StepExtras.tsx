@@ -76,9 +76,16 @@ export function StepExtras({ state, update, errors }: StepProps) {
     <div className="space-y-4">
       <Section title="Zavazadla" icon={Luggage} tone="accent">
         <p className="text-slate-700">
-          V balíčku {plan.label} máte v ceně {formatPieces(included)}. Limit{' '}
-          <strong className="text-ink">{formatCzk(plan.luggageLimit)}</strong> platí na jeden kufr
-          včetně elektroniky.
+          V balíčku {plan.label} máte v ceně {formatPieces(included)}. Na jeden kufr a věci v něm
+          platí limit <strong className="text-ink">{formatCzk(plan.luggageLimit)}</strong>.{' '}
+          {plan.electronicsItemLimit ? (
+            <>
+              Jeden kus elektroniky v kufru pojistíme nejvýš do{' '}
+              <strong className="text-ink">{formatCzk(plan.electronicsItemLimit)}</strong>.
+            </>
+          ) : (
+            <>Elektronika se počítá do limitu kufru.</>
+          )}
         </p>
         <Counter
           id="luggagePieces"
