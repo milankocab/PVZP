@@ -1,5 +1,6 @@
 import {
   PLANS,
+  SPORT_ACTIVITIES,
   TRAVELER_TYPES,
   isAddonIncluded,
   todayIso,
@@ -8,6 +9,7 @@ import {
   type PlanId,
   type PriceInput,
   type RegionId,
+  type SportId,
   type TravelerCounts,
   type TravelerType,
 } from '../pricing'
@@ -42,8 +44,9 @@ export interface FormState {
   luggagePieces: number | null
   /** Klient potvrdil, že chce pojistit méně kufrů, než je cestujících. */
   luggageSharedConfirmed: boolean
-  skiing: boolean | null
-  hasBookedTrip: boolean | null
+  /** Budete na cestě sportovat? Null znamená bez odpovědi. */
+  sports: boolean | null
+  sportActivities: SportId[]
   wantsCancellation: boolean
   tripPrice: string
   tripBookedOn: string
@@ -67,8 +70,8 @@ export function createInitialState(preselectedPlan: PlanId | null): FormState {
     plan: preselectedPlan,
     luggagePieces: null,
     luggageSharedConfirmed: false,
-    skiing: null,
-    hasBookedTrip: null,
+    sports: null,
+    sportActivities: [],
     wantsCancellation: false,
     tripPrice: '',
     tripBookedOn: '',
@@ -98,8 +101,10 @@ export function resizeTravelerDetails(
 
 export function selectedAddons(state: FormState): AddonId[] {
   const addons: AddonId[] = []
-  if (state.skiing) addons.push('winterSports')
-  if (state.hasBookedTrip && state.wantsCancellation) addons.push('cancellation')
+  if (state.sports && state.sportActivities.some((id) => SPORT_ACTIVITIES[id].risky)) {
+    addons.push('winterSports')
+  }
+  if (state.wantsCancellation) addons.push('cancellation')
   return addons
 }
 
@@ -225,11 +230,9 @@ export function validateStep(step: StepId, state: FormState, today: string = tod
       return state.plan ? {} : { plan: 'Vyberte balíček.' }
     case 'extras': {
       const errors: Errors = priceIssues(state, ['luggagePieces'])
-      if (state.skiing === null) errors.skiing = 'Odpovězte, prosím, jestli pojedete na hory.'
-      const cancellationIncluded =
-        state.plan !== null && isAddonIncluded(state.plan, 'cancellation')
-      if (!cancellationIncluded && state.hasBookedTrip === null) {
-        errors.hasBookedTrip = 'Odpovězte, prosím, jestli máte zaplacený zájezd nebo letenky.'
+      if (state.sports === null) errors.sports = 'Odpovězte, prosím, jestli budete sportovat.'
+      if (state.sports && state.sportActivities.length === 0) {
+        errors.sportActivities = 'Vyberte, jaké sporty plánujete.'
       }
       return { ...errors, ...priceIssues(state, ['tripPrice', 'tripBookedOn']) }
     }
