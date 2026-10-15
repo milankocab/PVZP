@@ -4,8 +4,13 @@ import { Link } from 'react-router-dom'
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
+      {/* HashRouter používá # pro stránky. Odkaz #obsah by přepnul stránku, proto fokus řeším ručně. */}
       <a
         href="#obsah"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById('obsah')?.focus()
+        }}
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded focus:bg-white focus:px-3 focus:py-2"
       >
         Přeskočit na obsah
@@ -42,7 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </ul>
         </nav>
       </header>
-      <main id="obsah" className="flex-1">
+      <main id="obsah" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
       <footer className="border-t border-slate-200 bg-slate-50">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { readUtmAudience, resolveVariant, type Variant } from '../analytics/experiment'
-import { VariantSwitcher } from '../components/VariantSwitcher'
+import { DebugBar } from '../components/DebugBar'
 import { PurchaseFlow } from '../purchase/PurchaseFlow'
 
 export function PurchasePage() {
@@ -11,21 +11,29 @@ export function PurchasePage() {
   const [assigned] = useState(() => resolveVariant(null))
   const variant = override === 'a' || override === 'b' ? override : assigned
   const upsellEnabled = params.get('upsell') === '1'
+  const segmentOverride = params.get('segment')
+  const segmentForced = segmentOverride === 'manazer'
 
-  const switchVariant = (next: Variant) => {
+  const setParam = (name: string, value: string | null) => {
     const updated = new URLSearchParams(params)
-    updated.set('v', next)
+    if (value === null) updated.delete(name)
+    else updated.set(name, value)
     setParams(updated)
   }
 
   return (
     <>
-      <VariantSwitcher variant={variant} onSwitch={switchVariant} />
+      <DebugBar
+        variant={variant}
+        segmentForced={segmentForced}
+        onSwitchVariant={(next: Variant) => setParam('v', next)}
+        onToggleSegment={(forced) => setParam('segment', forced ? 'manazer' : null)}
+      />
       <PurchaseFlow
-        key={`${variant}-${upsellEnabled}`}
+        key={`${variant}-${upsellEnabled}-${segmentForced}`}
         variant={variant}
         upsellEnabled={upsellEnabled}
-        segmentOverride={params.get('segment')}
+        segmentOverride={segmentOverride}
         utmAudience={readUtmAudience()}
       />
     </>

@@ -124,6 +124,7 @@ Data, která by hranici potvrdila na skutečném provozu: historická týdenní 
 - `#/sjednani` **Prototyp**, varianta se přidělí automaticky
 - `#/sjednani?v=a` a `#/sjednani?v=b` vynucení varianty (pro recruitery a pohovor)
 - `?segment=manazer` vynucení segmentu, `?upsell=1` zapnutí nabídky vyššího balíčku před platbou
+- Nad postupem je ladicí lišta (na ostrém webu by nebyla). Přepínač varianty A/B a přepínač segmentu jsou vizuálně oddělené, každý má vlastní rámeček, barvu a vysvětlivku. Segment nemění, co návštěvník vidí, jen pod jakým segmentem se sjednání změří.
 - `#/vysledky` **Ladicí přehled měření** z aktuálního prohlížeče (funnel z lokálně uložených eventů)
 
 ## Fáze 0: Příprava

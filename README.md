@@ -25,7 +25,7 @@ npm run lint     # ESLint
 | `src/analytics/` | A/B přidělení a měřicí vrstva `track(event, params)` |
 | `src/pages/` | Case study `#/`, prototyp `#/sjednani`, ladicí přehled měření `#/vysledky` |
 
-Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=1` zapne nabídku vyššího balíčku před platbou. Nad formulářem je ladicí přepínač variant. Na ostrém webu by nebyl.
+Parametry pro ukázku: `?v=a` nebo `?v=b` vynutí variantu testu, `?segment=manazer` vynutí segment manažerů, `?upsell=1` zapne nabídku vyššího balíčku před platbou. Nad formulářem je ladicí lišta s přepínačem varianty a segmentu. Na ostrém webu by nebyla.
 
 ## A/B test
 
